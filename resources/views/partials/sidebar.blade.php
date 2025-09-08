@@ -57,13 +57,21 @@
 
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
+        @if(session('user') && session('user.role') === 'admin')
         <li class="menu-item {{ request()->is('dashboard') ? 'active' : '' }}">
             <a href="{{ url('/dashboard/admin') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Dashboard</div>
             </a>
         </li>
-
+        @else
+        <li class="menu-item {{ request()->is('dashboard') ? 'active' : '' }}">
+            <a href="{{ url('/dashboard/customer') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                <div data-i18n="Analytics">Dashboard</div>
+            </a>
+        </li>
+        @endif
         {{-- Hanya muncul kalau login sebagai admin --}}
         @if(session('user') && session('user.role') === 'admin')
             <!-- Menu Datas -->

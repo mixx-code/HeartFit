@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\LoginController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PetugasController;
 
 Route::get('/', function () {
@@ -70,3 +71,6 @@ Route::get('/dashboard/customer', function () {
 Route::get('/kalender', function () {
     return view('kalender');
 });
+
+Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
+Route::post('/orders/preview', [OrderController::class, 'preview'])->name('orders.preview');
