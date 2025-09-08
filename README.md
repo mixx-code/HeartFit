@@ -7,6 +7,110 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+# Setup Proyek (Laragon + Laravel 12)
+
+Panduan singkat menjalankan proyek Laravel 12 yang di-clone dari GitHub menggunakan **Laragon** di Windows. Ikuti langkah **A s.d. D** berurutan.
+
+---
+
+## A. Konfigurasi `.env`
+
+Salin file contoh lalu sesuaikan koneksi database (default Laragon: user `root`, tanpa password).
+
+**PowerShell (Windows):**
+
+    Copy-Item .env.example .env
+
+**CMD:**
+
+    copy .env.example .env
+
+Edit `.env` (minimal seperti ini):
+
+    APP_NAME="Laravel"
+    APP_ENV=local
+    APP_KEY=                # akan diisi otomatis di langkah B
+    APP_DEBUG=true
+    APP_URL=http://nama-project.test   # domain auto Laragon sesuai nama folder
+
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=db_laravel
+    DB_USERNAME=root
+    DB_PASSWORD=
+
+**Catatan Laragon:** Aktifkan **Auto Virtual Hosts** agar domain `http://nama-project.test` otomatis mengarah ke folder `public/`. Jika tidak, gunakan `php artisan serve` (lihat Bagian D).
+
+---
+
+## B. Install Dependencies & Generate App Key
+
+Jalankan di root project:
+
+    composer install
+    php artisan key:generate
+
+Kenapa perlu?
+
+- `composer install` mengunduh library ke folder `vendor` (di-ignore Git).
+- `php artisan key:generate` mengisi `APP_KEY` untuk enkripsi session/token.
+
+---
+
+## C. Database Migration & Storage Link
+
+Pastikan service MySQL Laragon berjalan dan database sudah dibuat (mis. `db_laravel`).
+
+    php artisan migrate
+    # jika ada seeder:
+    # php artisan migrate --seed
+
+Buat link storage ke public (agar file bisa diakses web server):
+
+    php artisan storage:link
+
+Kenapa perlu?
+
+- Setelah clone, struktur tabel belum ada — `migrate` membuatnya.
+- `storage:link` membuat symlink `public/storage` (folder ini di-ignore Git).
+
+---
+
+## D. Menjalankan Aplikasi
+
+### Opsi 1 — Laragon (Auto Virtual Hosts)
+
+1. Buka Laragon → **Start All**.
+2. Akses: `http://nama-project.test`  
+   *(nama domain mengikuti nama folder project di `laragon/www`)*
+
+### Opsi 2 — Built-in PHP Server
+
+    php artisan serve
+
+Buka: `http://127.0.0.1:8000`
+
+**(Jika memakai Vite untuk asset)**
+Di terminal terpisah:
+
+    npm install
+    npm run dev
+    # atau build produksi:
+    # npm run build
+
+---
+
+## Troubleshooting Cepat
+
+Jika konfigurasi berubah atau tampilan tidak ter-update:
+
+    php artisan config:clear
+    php artisan route:clear
+    php artisan view:clear
+
+Selesai. 🚀
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
