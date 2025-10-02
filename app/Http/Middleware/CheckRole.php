@@ -7,21 +7,27 @@ use Illuminate\Http\Request;
 
 class CheckRole
 {
-    /**
-     * Handle an incoming request.
-     */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, string $roles)
     {
-        $user = session('user');
+        // asumsikan route diletakkan di dalam group 'auth'
+        $user = $request->user(); // sama dengan Auth::user()
 
-        // Jika belum login
+        // Jika entah bagaimana belum login, serahkan ke middleware 'auth' di luar
         if (!$user) {
-            return redirect()->route('login')->with('status', 'Kamu harus login terlebih dahulu.');
+            return $next($request); // biar 'auth' yang handle. Atau return redirect()->route('login');
         }
 
-        // Jika role tidak sesuai
-        if ($user['role'] !== $role) {
-            return redirect()->route('login')->with('status', 'Kamu tidak punya akses ke halaman ini.');
+        // Dukung banyak role: role1,role2
+        $allowed = collect(explode(',', $roles))->map(fn($r) => trim($r))->filter()->all();
+
+        if (!in_array($user->role ?? '', $allowed, true)) {
+            // BUKAN redirect ke /login (itu bikin loop)
+            // Pilihan 1: Forbidden
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+
+            // Pilihan 2 (alternatif): redirect ke dashboard sesuai role sebenarnya
+            // return redirect()->route($user->role === 'admin' ? 'dashboard.admin' : 'dashboard.customer')
+            //        ->with('toast_error', 'Anda tidak memiliki akses ke halaman itu.');
         }
 
         return $next($request);

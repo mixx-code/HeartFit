@@ -13,10 +13,17 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+
+            // gunakan 'name' sebagai username (unik) agar bisa login via name atau email
+            $table->string('name')->unique();
+
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+
+            // role untuk guard akses dashboard & middleware role:...
+            $table->string('role')->default('customer'); // 'admin' | 'customer' (atau sesuaikan)
+
             $table->rememberToken();
             $table->timestamps();
         });
@@ -42,8 +49,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
+        Schema::dropIfExists('password_reset_tokens');
+        Schema::dropIfExists('users');
     }
 };

@@ -3,7 +3,7 @@
 
 @section('content')
 <div class="container py-5">
-  <h3 class="fw-bold text-primary mb-3">Ringkasan Pesanan (Statis)</h3>
+  <h3 class="fw-bold text-primary mb-3">Ringkasan Pesanan</h3>
 
   <div class="row g-3">
     <div class="col-lg-7">
@@ -28,15 +28,31 @@
         </div>
       </div>
 
+      {{-- Tombol Aksi --}}
       <div class="d-flex gap-2 mt-3">
         <a href="{{ route('orders.create') }}" class="btn btn-outline-secondary">Ubah Pesanan</a>
-        <button class="btn btn-success" onclick="alert('Simulasi: Pesanan dikonfirmasi (tanpa database).')">Konfirmasi (Simulasi)</button>
+
+        {{-- Tombol PESAN: Simpan ke DB --}}
+        <form action="{{ route('orders.store') }}" method="POST" class="ms-auto">
+          @csrf
+          <input type="hidden" name="package_key"      value="{{ $summary['package_key'] }}">
+          <input type="hidden" name="package_label"    value="{{ $summary['package_label'] }}">
+          <input type="hidden" name="package_category" value="{{ $summary['package_category'] }}">
+          <input type="hidden" name="package_price"    value="{{ $summary['package_price'] }}">
+          <input type="hidden" name="start_date"       value="{{ $summary['start_date'] }}">
+          <input type="hidden" name="end_date"         value="{{ $summary['end_date'] }}">
+          <input type="hidden" name="days"             value="{{ $summary['days'] }}">
+          <input type="hidden" name="payment_method"   value="{{ $summary['payment_method'] }}">
+          <button type="submit" class="btn btn-success">
+            Pesan
+          </button>
+        </form>
       </div>
     </div>
 
     <div class="col-lg-5">
       <div class="card border-0 shadow-sm">
-        <div class="card-header bg-light fw-semibold">Payload JSON (untuk integrasi API nanti)</div>
+        <div class="card-header bg-light fw-semibold">Payload JSON (untuk integrasi API)</div>
         <div class="card-body">
           <pre class="mb-0" style="white-space: pre-wrap;">{{ $json }}</pre>
         </div>

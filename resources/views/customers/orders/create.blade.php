@@ -239,23 +239,12 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="w-100">
-                                <input type="radio" name="payment_method" class="btn-check" value="bank_transfer"
+                                <input type="radio" name="payment_method" class="btn-check" value="transfer"
                                     required>
                                 <div class="card border-0 shadow-sm h-100 selectable-card pay">
                                     <div class="card-body">
-                                        <div class="h6 mb-1">Transfer Bank</div><small
-                                            class="text-muted">BCA/BNI/BRI/Mandiri</small>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="w-100">
-                                <input type="radio" name="payment_method" class="btn-check" value="ewallet" required>
-                                <div class="card border-0 shadow-sm h-100 selectable-card pay">
-                                    <div class="card-body">
-                                        <div class="h6 mb-1">E-Wallet</div><small class="text-muted">OVO • GoPay • DANA •
-                                            ShopeePay</small>
+                                        <div class="h6 mb-1">Transfer</div><small
+                                            class="text-muted">BCA • BNI • BRI • Mandiri • OVO • GoPay • DANA</small>
                                     </div>
                                 </div>
                             </label>

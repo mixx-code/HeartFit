@@ -3,75 +3,49 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    private $users = [
-        [
-            'username' => 'superadmin',
-            'email'    => 'superadmin@mail.com',
-            'password' => 'superadmin123',
-            'role'     => 'admin',
-        ],
-        [
-            'username' => 'customer',
-            'email'    => 'customer@mail.com',
-            'password' => 'customer123',
-            'role'     => 'customer',
-        ],
-    ];
-
     public function showLoginForm()
     {
-        return view('auth.login'); // file blade kamu
+        return view('auth.login');
     }
+
 
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => 'required|string',
+            'email'    => 'required|string', // bisa email ATAU username (pakai kolom name)
             'password' => 'required|string',
         ]);
 
-        $emailOrUsername = $request->input('email'); // bisa email atau username
-        $password        = $request->input('password');
+        $login = $request->input('email');
 
-        // cek di dummy users
-        $user = collect($this->users)->first(function ($u) use ($emailOrUsername, $password) {
-            return (
-                ($u['email'] === $emailOrUsername || $u['username'] === $emailOrUsername)
-                && $u['password'] === $password
-            );
-        });
+        // Bisa login pakai email ATAU name (username)
+        $credentials = [
+            str_contains($login, '@') ? 'email' : 'name' => $login,
+            'password' => $request->input('password'),
+        ];
 
-        if (!$user) {
+        if (!Auth::attempt($credentials, true)) {
             return back()->withErrors(['email' => 'Email/Username atau password salah.'])->withInput();
         }
 
-        // Simpan ke session
-        session([
-            'user' => [
-                'username' => $user['username'],
-                'email'    => $user['email'],
-                'role'     => $user['role'],
-            ],
-        ]);
+        $request->session()->regenerate();
 
-        // Redirect berdasarkan role
-        if ($user['role'] === 'admin') {
-            return redirect()->route('dashboard.admin')->with('status', 'Selamat datang Admin!');
-        }
-
-        if ($user['role'] === 'customer') {
-            return redirect()->route('dashboard.customer')->with('status', 'Selamat datang Customer!');
-        }
-
-        return redirect()->route('dashboard');
+        // Arahkan ke dashboard sesuai role
+        $role = Auth::user()->role ?? 'customer';
+        return $role === 'admin'
+            ? redirect()->route('dashboard.admin')->with('status', 'Selamat datang Admin!')
+            : redirect()->route('dashboard.customer')->with('status', 'Selamat datang Customer!');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        session()->forget('user');
-        return redirect()->route('welcome')->with('toast_success', 'Berhasil logout. Sampai jumpa!');;
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('welcome')->with('toast_success', 'Berhasil logout. Sampai jumpa!');
     }
 }
