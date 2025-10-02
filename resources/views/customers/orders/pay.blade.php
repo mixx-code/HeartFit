@@ -78,6 +78,7 @@ async function confirmToServer(midtransOrderId) {
       headers: {'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'Accept':'application/json'},
       body: JSON.stringify({ midtrans_order_id: midtransOrderId })
     });
+    console.log("res nya > ", await res.json())
     return await res.json();
   } catch(e) {
     console.error('confirm error', e);
@@ -90,12 +91,14 @@ document.getElementById('btnPay')?.addEventListener('click', function() {
     onSuccess: async (result) => {
       console.log('onSuccess', result);
       await postSnapResult({ hook:'success', result });
+      console.log("order id > ", result?.order_id);
       await confirmToServer(result?.order_id);       // verifikasi server-to-server
       window.location.href = @json(route('orders.finish', $order));
     },
     onPending: async (result) => {
       console.log('onPending', result);
       await postSnapResult({ hook:'pending', result });
+      console.log("order id > ", await result?.order_id);
       await confirmToServer(result?.order_id);       // sinkronkan walau pending
       alert('Transaksi pending. Silakan selesaikan pembayaran Anda.');
     },

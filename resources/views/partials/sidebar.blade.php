@@ -72,6 +72,20 @@
     @endif
 
     {{-- Transaksi (umum / sesuai kebutuhan) --}}
+    <li class="menu-header small text-uppercase"><span class="menu-header-text">Orders</span></li>
+    <li class="menu-item {{ request()->is('transaksi*') ? 'active open' : '' }}">
+      <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon tf-icons bx bx-detail"></i>
+        <div data-i18n="Form Elements">Orders</div>
+      </a>
+      <ul class="menu-sub">
+        <li class="menu-item {{ request()->is('riwayatTransaksi') ? 'active' : '' }}">
+          <a href="{{ route('orders.index') }}" class="menu-link">
+            <div data-i18n="Input groups">List Orders</div>
+          </a>
+        </li>
+      </ul>
+    </li>
     <li class="menu-header small text-uppercase"><span class="menu-header-text">Transaksi</span></li>
     <li class="menu-item {{ request()->is('transaksi*') ? 'active open' : '' }}">
       <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -91,5 +105,6 @@
         </li>
       </ul>
     </li>
+    
   </ul>
 </aside>

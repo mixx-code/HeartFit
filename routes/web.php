@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->group(function () {
         Route::view('/dashboard/admin', 'admin.dashboard')->name('dashboard.admin');
         Route::resource('petugas', PetugasController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        Route::view('/admin/products/add', 'admin.products.addPaketMakanan')
+            ->name('admin.products.add');
     });
 
     Route::middleware('role:customer')->group(function () {
@@ -32,6 +34,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
         Route::put('/customers/{id}',      [CustomerController::class, 'update'])->name('customers.update');
         Route::delete('/customers/{id}',   [CustomerController::class, 'destroy'])->name('customers.destroy');
+
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 
         Route::post('/orders',               [OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{order}/pay',    [OrderController::class, 'pay'])->name('orders.pay');

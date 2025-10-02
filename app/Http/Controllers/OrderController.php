@@ -30,6 +30,24 @@ class OrderController extends Controller
         'premium_3bulanan' => ['label' => '3 Bulanan (Premium)', 'category' => 'Premium', 'price' => 5830000],
     ];
 
+    public function index()
+    {
+        $q = request('q');
+        $perPage = (int) request('per_page', 10);
+
+        $orders = Order::query()
+            ->where('user_id', Auth::id())
+            ->when($q, function ($query) use ($q) {
+                $query->where('order_number', 'like', "%{$q}%")
+                    ->orWhere('package_label', 'like', "%{$q}%");
+            })
+            ->latest('id')
+            ->paginate($perPage);
+
+        return view('customers.orders.index', compact('orders', 'perPage'));
+    }
+
+
     public function create()
     {
         $packages = $this->packages;
@@ -127,19 +145,46 @@ class OrderController extends Controller
 
         $params = [
             'transaction_details' => [
-                'order_id'      => $midtransOrderId,
-                'gross_amount'  => (int) ($order->amount_total ?? $order->package_price),
+                'order_id'     => $midtransOrderId,
+                'gross_amount' => (int) ($order->amount_total ?? $order->package_price),
             ],
+
+            'item_details' => [
+                [
+                    'id'       => $order->package_key,
+                    'price'    => (int) ($order->amount_total ?? $order->package_price),
+                    'quantity' => 1,
+                    'name'     => $order->package_label,
+                    'category' => $order->package_category,
+                ],
+            ],
+
             'customer_details' => [
                 'first_name' => optional(Auth::user())->name ?? 'Guest',
                 'email'      => optional(Auth::user())->email ?? 'user@example.com',
             ],
+
+            // 🔑 Hanya tampilkan bank VA BCA/BNI/BRI/Mandiri + QRIS + e-wallet (OVO, GoPay, DANA)
+            'enabled_payments' => [
+                'bca_va',
+                'bni_va',
+                'bri_va',
+                'mandiri_va',
+                'qris',
+                'ovo',
+                'gopay',
+                'dana',
+            ],
+
             'callbacks' => [
                 'finish' => route('orders.finish', $order),
             ],
-            'expiry' => ['unit' => 'minutes', 'duration' => 60],
-            // kamu bisa batasi payment channel sesuai payment_method yang dipilih
+            'expiry' => [
+                'unit' => 'minutes',
+                'duration' => 60,
+            ],
         ];
+
 
         $token = Snap::getSnapToken($params);
 
@@ -167,7 +212,7 @@ class OrderController extends Controller
     }
 
     /** Webhook Midtrans (notifikasi server → sumber status final) */
-    public function webhook(Request $req)
+    public function webhook(Request $req, MidtransService $svc)
     {
         $serverKey = config('services.midtrans.server_key');
 
@@ -230,66 +275,33 @@ class OrderController extends Controller
     }
 
     // OrderController@confirm
-    public function confirm(Request $request, Order $order)
+    public function confirm(Request $request, Order $order, MidtransService $svc)
     {
-        $data = $request->validate([
-            'midtrans_order_id' => ['required', 'string'],
-        ]);
+        $data = $request->validate(['midtrans_order_id' => ['required', 'string']]);
 
-        // Normalisasi order_id yang masuk dari client
         $incoming = trim($data['midtrans_order_id']);
-
-        // Jika client kirim tanpa suffix "-attempt", fallback ke attempt terakhir
         if ($incoming === $order->order_number) {
             $lastAttempt = (int) ($order->paymentTransactions()->max('attempt') ?? 1);
             $incoming = "{$order->order_number}-{$lastAttempt}";
         }
-
-        // Safety check: pastikan prefix cocok dengan order yg sedang dikonfirmasi
         if (!Str::startsWith($incoming, $order->order_number . '-')) {
-            Log::warning('Confirm refused: order_id prefix mismatch', [
-                'order_id'   => $order->id,
-                'incoming'   => $incoming,
-                'expected'   => $order->order_number . '-*',
-            ]);
-            return response()->json([
-                'ok'      => false,
-                'message' => 'Order ID tidak cocok dengan order ini.',
-            ], 422);
+            Log::warning('Confirm refused: order_id prefix mismatch', ['order_id' => $order->id, 'incoming' => $incoming]);
+            return response()->json(['ok' => false, 'message' => 'Order ID tidak cocok dengan order ini.'], 422);
         }
 
-        // Ambil attempt dari suffix
         $attemptStr = Str::afterLast($incoming, '-');
         $attempt    = ctype_digit($attemptStr) ? (int) $attemptStr : 1;
 
-        // Panggil Midtrans untuk status aktual
         try {
-            $status = Transaction::status($incoming); // stdClass
+            $status = Transaction::status($incoming); // stdClass (atau dianggap array oleh analyzer)
         } catch (\Exception $e) {
-            Log::warning('Midtrans status error', [
-                'order_id' => $order->id,
-                'incoming' => $incoming,
-                'error'    => $e->getMessage(),
-            ]);
-            return response()->json([
-                'ok'      => false,
-                'message' => 'Midtrans status error: ' . $e->getMessage(),
-                'hint'    => 'Umumnya karena transaksi belum dibuat (popup ditutup) atau ENV/serverKey tidak sesuai.',
-            ], 422);
+            Log::warning('Midtrans status error', ['order_id' => $order->id, 'incoming' => $incoming, 'error' => $e->getMessage()]);
+            return response()->json(['ok' => false, 'message' => 'Midtrans status error: ' . $e->getMessage()], 422);
         }
 
-        // Tulisan status mentah ke log (membantu debug saat sandbox)
-        Log::info('Midtrans status ok', [
-            'order_id' => $order->id,
-            'incoming' => $incoming,
-            'status'   => $status,
-        ]);
+        Log::info('Midtrans status ok', ['order_id' => $order->id, 'incoming' => $incoming, 'status' => $status]);
 
-        // Update atomik agar konsisten
         DB::transaction(function () use ($order, $incoming, $attempt, $status) {
-
-            // Upsert PaymentTransaction berbasis $incoming (BUKAN data mentah dari request)
-            /** @var \App\Models\PaymentTransaction|null $tx */
             $tx = $order->paymentTransactions()
                 ->where('midtrans_order_id', $incoming)
                 ->first();
@@ -298,42 +310,86 @@ class OrderController extends Controller
                 $tx = $order->paymentTransactions()->create([
                     'midtrans_order_id'  => $incoming,
                     'attempt'            => $attempt,
-                    'transaction_status' => $status->transaction_status ?? 'pending',
-                    'gross_amount'       => (int) (($status->gross_amount ?? $order->amount_total) ?: $order->package_price),
+                    'transaction_status' => data_get($status, 'transaction_status', 'pending'),
+                    'gross_amount'       => (int) ((data_get($status, 'gross_amount')
+                        ?? $order->amount_total)
+                        ?: $order->package_price),
                 ]);
             }
 
+            $trxStatus = data_get($status, 'transaction_status', $tx->transaction_status);
+            $fraud     = data_get($status, 'fraud_status',     $tx->fraud_status);
+            $payment   = data_get($status, 'payment_type',     $tx->payment_type);
+
+            // --- RANGKUM EXTRA (VA / QR / PDF, dsb) ---
+            $extra = $tx->extra ?? [];
+            $vaNumbers = data_get($status, 'va_numbers');                 // BCA/BNI/BRI {[{bank,va_number}]}
+            $permataVa = data_get($status, 'permata_va_number');          // Permata
+            $billKey   = data_get($status, 'bill_key');                   // Mandiri
+            $billerCode = data_get($status, 'biller_code');                // Mandiri
+            $actions   = data_get($status, 'actions');                    // e-wallet actions (deeplink/pdf)
+            $qrString  = data_get($status, 'qr_string');                  // QRIS string (jika ada)
+            $pdfUrl    = collect((array) $actions)->firstWhere('name', 'pdf_url')['url'] ?? null;
+
+            $extra['payment_type'] = $payment;
+            if ($vaNumbers) $extra['va_numbers'] = $vaNumbers;
+            if ($permataVa) $extra['permata_va_number'] = $permataVa;
+            if ($billKey)   $extra['bill_key']   = $billKey;
+            if ($billerCode) $extra['biller_code'] = $billerCode;
+            if ($actions)   $extra['actions']    = $actions;
+            if ($qrString)  $extra['qr_string']  = $qrString;
+            if ($pdfUrl)    $extra['pdf_url']    = $pdfUrl;
+
+            // Expiry (kalau Midtrans mengembalikan)
+            $expiryTime = data_get($status, 'expiry_time'); // beberapa channel pakai field ini (format epoch/ISO)
+            $expiredAt  = null;
+            if ($expiryTime) {
+                // coba parse ke datetime laravel
+                try {
+                    $expiredAt = \Carbon\Carbon::parse($expiryTime);
+                } catch (\Throwable $e) {
+                }
+            }
+
             $tx->update([
-                'transaction_id'     => $status->transaction_id  ?? $tx->transaction_id,
-                'payment_type'       => $status->payment_type     ?? $tx->payment_type,
-                'transaction_status' => $status->transaction_status ?? $tx->transaction_status,
-                'fraud_status'       => $status->fraud_status     ?? $tx->fraud_status,
-                'gross_amount'       => isset($status['gross_amount']) ? (int) $status['gross_amount'] : $tx->gross_amount,
-                // signature_key biasanya tidak ada di endpoint status; biarkan null/eksisting
+                'transaction_id'     => data_get($status, 'transaction_id',  $tx->transaction_id),
+                'payment_type'       => $payment,
+                'transaction_status' => $trxStatus,
+                'fraud_status'       => $fraud,
+                'gross_amount'       => (int) (data_get($status, 'gross_amount', $tx->gross_amount)),
+                'extra'              => $extra,
                 'raw_notification'   => json_decode(json_encode($status), true),
-                'settled_at'         => in_array(($status->transaction_status ?? ''), ['capture', 'settlement'])
-                    ? now()
-                    : $tx->settled_at,
+                'expired_at'         => $expiredAt ?: $tx->expired_at,
+                'settled_at'         => in_array($trxStatus, ['capture', 'settlement']) ? now() : $tx->settled_at,
             ]);
 
-            // === Sinkron Order ===
-            $trx   = $status->transaction_status ?? '';
-            $fraud = $status->fraud_status ?? null;
-
-            if (($trx === 'capture' && $fraud !== 'challenge') || $trx === 'settlement') {
+            // === Sinkron ke Orders ===
+            if (($trxStatus === 'capture' && $fraud !== 'challenge') || $trxStatus === 'settlement') {
                 $order->update(['status' => 'PAID', 'paid_at' => now()]);
-            } elseif ($trx === 'expire') {
+            } elseif ($trxStatus === 'expire') {
                 $order->update(['status' => 'EXPIRED']);
-            } elseif ($trx === 'cancel') {
+            } elseif ($trxStatus === 'cancel') {
                 $order->update(['status' => 'CANCELED']);
-            } else {
-                // pending / deny / challenge / failure -> biarkan UNPAID
-                // Webhook tetap akan jadi source of truth final
+            } elseif ($trxStatus === 'pending') {
+                // PENDING: tandai eksplisit (tetap UNPAID) + (opsional) simpan meta ringkas untuk kemudahan tampilan
+                $meta = $order->meta ?? [];
+                $meta['last_pending'] = [
+                    'payment_type' => $payment,
+                    'va_numbers'   => $vaNumbers,
+                    'permata'      => $permataVa,
+                    'bill_key'     => $billKey,
+                    'biller_code'  => $billerCode,
+                    'qr_string'    => $qrString,
+                    'pdf_url'      => $pdfUrl,
+                    'expired_at'   => optional($expiredAt)?->toIso8601String(),
+                ];
+                $order->update(['status' => 'UNPAID', 'meta' => $meta]);
             }
         });
 
-        // Balikkan status terbaru ke client
+
         $fresh = $order->fresh();
+
         return response()->json([
             'ok'        => true,
             'order_id'  => $fresh->id,
@@ -354,5 +410,16 @@ class OrderController extends Controller
         $order->update(['meta' => $meta]);
 
         return response()->json(['ok' => true]);
+    }
+
+    public function statusJson(Order $order)
+    {
+        return response()->json([
+            'id'          => $order->id,
+            'order_no'    => $order->order_number,
+            'status'      => $order->status,
+            'paid_at'     => optional($order->paid_at)?->toDateTimeString(),
+            'updated_at'  => $order->updated_at->toDateTimeString(),
+        ]);
     }
 }
