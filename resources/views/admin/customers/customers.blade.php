@@ -19,11 +19,11 @@
                 {{-- Form + tombol di kanan --}}
                 <div class="d-flex flex-column flex-md-row align-items-md-center gap-2">
                     {{-- Search + Page size (GET) --}}
-                    <form class="d-flex align-items-center gap-2" method="GET" action="{{ route('customers.index') }}">
+                    <form class="d-flex align-items-center gap-2" method="GET" action="{{ route('admin.data.customers') }}">
                         <div class="input-group" style="min-width: 280px;">
                             <span class="input-group-text"><i class="bx bx-search"></i></span>
                             <input type="search" name="q" value="{{ request('q') }}" class="form-control"
-                                placeholder="Cari nama, NIK, alamat, dll...">
+                                placeholder="Cari nama ...">
                         </div>
                         <div class="input-group" style="max-width: 160px;">
                             <span class="input-group-text">Rows</span>
@@ -38,13 +38,13 @@
                         </div>
                         <button class="btn btn-primary" type="submit">Search</button>
                         @if (request('q'))
-                            <a href="{{ route('customers.index', ['per_page' => request('per_page', $perPage)]) }}"
+                            <a href="{{ route('admin.data.customers', ['per_page' => request('per_page', $perPage)]) }}"
                                 class="btn btn-outline-secondary">Reset</a>
                         @endif
                     </form>
 
                     {{-- Tombol Tambah Data --}}
-                    <a class="btn btn-success" href="{{ route('customers.create') }}">
+                    <a class="btn btn-success" href="{{ route('admin.data.customers.create') }}">
                         <i class="bi bi-plus-circle"></i> Tambah Data
                     </a>
                 </div>
@@ -55,37 +55,38 @@
         <thead class="table-light">
           <tr>
             <th>Nama</th>
-            <th>NIK</th>
-            <th>Alamat</th>
-            <th>Jenis Kelamin</th>
-            <th>Tempat Tanggal Lahir</th>
-            <th>Berat Badan/Tinggi Badan</th>
             <th>Email</th>
-            <th>Nomor HP</th>
+            <th>Created By</th>
+            <th>Updated By</th>
+            <th>Deleted By</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+            <th>Deleted At</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody class="table-border-bottom-0">
           @forelse($customers as $c)
             <tr>
-              <td>{{ $c['nama'] }}</td>
-              <td>{{ $c['nik'] }}</td>
-              <td>{{ $c['alamat'] }}</td>
-              <td>{{ $c['jenis_kelamin'] }}</td>
-              <td>{{ $c['ttl'] }}</td>
-              <td>{{ $c['bb_tb'] }}</td>
+              <td>{{ $c['name'] }}</td>
               <td>{{ $c['email'] }}</td>
-              <td>{{ $c['hp'] }}</td>
+              <td>{{ $c['created_by'] }}</td>
+              <td>{{ $c['updated_by'] }}</td>
+              <td>{{ $c['deleted_by'] }}</td>
+              <td>{{ $c['created_at'] }}</td>
+              <td>{{ $c['updated_at'] }}</td>
+              <td>{{ $c['deleted_at'] }}</td>
               <td>
                 <div class="dropdown">
                   <button type="button" class="btn p-0 dropdown-toggle hide-arrow" data-bs-toggle="dropdown">
                     <i class="bx bx-dots-vertical-rounded"></i>
                   </button>
                   <div class="dropdown-menu">
+                    <a class="dropdown-item" href="{{ route('admin.data.customer.detail', $c->detail->id) }}"><i class="bx bx-detail me-1"></i> Detail</a>
                     <a class="dropdown-item" href="#"><i class="bx bx-edit-alt me-1"></i> Edit</a>
 
                     {{-- DELETE --}}
-                    <form action="{{ route('customers.destroy', $c['id']) }}" method="POST"
+                    <form action="{{ route('admin.destroy', $c['id']) }}" method="POST"
                           onsubmit="return confirm('Yakin hapus {{ $c['nama'] }}?');">
                       @csrf
                       @method('DELETE')

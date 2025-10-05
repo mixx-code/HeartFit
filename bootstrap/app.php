@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
             // Middleware role buatanmu:
             'role' => CheckRole::class,   // pastikan class-nya ada & benar
+            'session.timeout' => \App\Http\Middleware\SessionTimeout::class,
         ]);
 
         // Kalau sebelumnya kamu bikin 'auth.session' custom, HAPUS aja alias itu.

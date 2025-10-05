@@ -12,20 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-
-            // gunakan 'name' sebagai username (unik) agar bisa login via name atau email
-            $table->string('name')->unique();
-
+            $table->id(); // auto increment
+            $table->string('name');
+            $table->string('role')->default('customer'); // admin, customer, dll
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->timestamp('email_verified_at')->nullable();
 
-            // role untuk guard akses dashboard & middleware role:...
-            $table->string('role')->default('customer'); // 'admin' | 'customer' (atau sesuaikan)
+            // audit trail
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->unsignedBigInteger('deleted_by')->nullable();
 
             $table->rememberToken();
-            $table->timestamps();
+            $table->timestamps(); // created_at, updated_at
+            $table->softDeletes(); // deleted_at
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

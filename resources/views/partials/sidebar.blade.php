@@ -48,7 +48,7 @@
             </a>
           </li>
           <li class="menu-item {{ request()->routeIs('customers.*') ? 'active' : '' }}">
-            <a href="{{ route('customers.index') }}" class="menu-link">
+            <a href="{{ route('admin.data.customers') }}" class="menu-link">
               <div data-i18n="Without menu">Customers</div>
             </a>
           </li>

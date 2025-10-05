@@ -28,11 +28,13 @@ class LoginController extends Controller
             'password' => $request->input('password'),
         ];
 
-        if (!Auth::attempt($credentials, true)) {
+        if (!Auth::attempt($credentials)) {
             return back()->withErrors(['email' => 'Email/Username atau password salah.'])->withInput();
         }
 
         $request->session()->regenerate();
+        $request->session()->put('login_time', now()->toISOString());
+        session(['login_time_ts' => now()->timestamp]);
 
         // Arahkan ke dashboard sesuai role
         $role = Auth::user()->role ?? 'customer';
