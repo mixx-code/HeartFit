@@ -6,6 +6,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserDetailController;
@@ -15,6 +16,7 @@ Route::get('/', [LandingPageController::class, 'index'])->name('welcome');
 Route::middleware('guest')->group(function () {
     Route::get('/login',  [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.post');
+    Route::view('/registrasi', 'auth.register')->name('registrasi');
 });
 
 Route::middleware(['auth', 'session.timeout'])->group(function () {
@@ -22,8 +24,24 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
 
     Route::middleware('role:admin')->group(function () {
         Route::view('/dashboard/admin', 'admin.dashboard')->name('dashboard.admin');
-        Route::resource('petugas', PetugasController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+
+        // Route::resource('petugas', PetugasController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+
         Route::view('/admin/products/add', 'admin.products.addPaketMakanan')->name('admin.products.add');
+
+        // === ROUTE DATA PETUGAS/ADMIN ===
+        Route::get('/admin/data/petugas', [PetugasController::class, 'index'])->name('admin.data.petugas');
+
+        Route::get('/admin/data/petugas/create', [PetugasController::class, 'create'])->name('admin.data.petugas.create');
+
+        Route::post('/admin/data/petugas/create', [PetugasController::class, 'store'])->name('admin.data.petugas.store');
+
+        Route::get('/admin/data/petugas/detail/{user_detail}', [PetugasController::class, 'show'])->name('admin.data.petugas.detail');
+
+        Route::put('/admin/data/petugas/detail/{user_detail}', [PetugasController::class, 'update'])->name('admin.data.petugas.update');
+
+        Route::delete('/admin/data/petugas/{user}', [PetugasController::class, 'destroy'])->name('admin.data.petugas.delete');
+
 
         // route data customers
         Route::get('/admin/data/customers', [CustomerController::class, 'index'])->name('admin.data.customers');
@@ -34,9 +52,27 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
 
         Route::get('/admin/data/customer/detail/{user_detail}', [UserDetailController::class, 'show'])->name('admin.data.customer.detail');
 
+        Route::put('/admin/data/customer/detail/{user_detail}', [UserDetailController::class, 'update'])->name('admin.user-details.update');
+
+        Route::delete('/admin/data/customer/{user}', [UserController::class, 'destroy'])
+            ->name('admin.data.customer.delete');
+
         // akhir data customers
         Route::resource('user-details', UserDetailController::class);
 
+        // route package type
+
+        Route::get('/admin/packageType/addPackageType', [PackageTypeController::class, 'create'])->name('admin.packageType.addPackageType');
+
+        Route::post('/admin/packageType/store', [PackageTypeController::class, 'store'])->name('admin.packageType.store');
+
+        Route::get('/admin/packageType', [PackageTypeController::class, 'index'])->name('admin.packageType');
+        
+        // akhir route package type
+
+        // route products
+        // Route::get('/admin/products/packageType', PackageTypeController::class, 'index')->name('admin.products.packageType');
+        // akhir route products
 
         // Route::get('/admin/data/customers', [UserController::class, 'customers'])
         //     ->name('admin.customers');
@@ -57,7 +93,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::put('/customers/{id}',      [CustomerController::class, 'update'])->name('customers.update');
         Route::delete('/customers/{id}',   [CustomerController::class, 'destroy'])->name('customers.destroy');
 
-        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('/customer/orders', [OrderController::class, 'index'])->name('orders.index');
 
         Route::post('/orders',               [OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{order}/pay',    [OrderController::class, 'pay'])->name('orders.pay');

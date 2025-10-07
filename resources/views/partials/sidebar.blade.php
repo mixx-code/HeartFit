@@ -2,7 +2,8 @@
   <div class="app-brand demo">
     <a href="{{ route('welcome') }}" class="app-brand-link">
       {{-- ... logo kamu tetap ... --}}
-      <span class="app-brand-text demo menu-text fw-bolder ms-2">Sneat</span>
+      <img src="{{ asset('assets/img/favicon/heartfit_logo.png') }}" width="200px" alt="">
+      {{-- <span class="app-brand-text demo menu-text fw-bolder ms-2">heartfit</span> --}}
     </a>
     <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
       <i class="bx bx-chevron-left bx-sm align-middle"></i>
@@ -36,18 +37,18 @@
     @if($isAuth && $role === 'admin')
       <li class="menu-header small text-uppercase"><span class="menu-header-text">Data Users</span></li>
 
-      <li class="menu-item {{ request()->is('petugas*') || request()->is('admin*') || request()->is('customers*') ? 'active open' : '' }}">
+      <li class="menu-item {{ request()->is('admin/data*') || request()->is('customers*') ? 'active open' : '' }}">
         <a href="javascript:void(0);" class="menu-link menu-toggle">
           <i class="menu-icon tf-icons bx bx-table"></i>
           <div data-i18n="data">Data User</div>
         </a>
         <ul class="menu-sub">
-          <li class="menu-item {{ request()->routeIs('petugas.*') ? 'active' : '' }}">
-            <a href="{{ route('petugas.index') }}" class="menu-link">
+          <li class="menu-item {{ request()->is('admin/data/petugas*') ? 'active' : '' }}">
+            <a href="{{ route('admin.data.petugas') }}" class="menu-link">
               <div data-i18n="Without menu">Petugas/Admin</div>
             </a>
           </li>
-          <li class="menu-item {{ request()->routeIs('customers.*') ? 'active' : '' }}">
+          <li class="menu-item {{ request()->is('admin/data/customers*') || request()->is('admin/data/customer*') ? 'active' : '' }}">
             <a href="{{ route('admin.data.customers') }}" class="menu-link">
               <div data-i18n="Without menu">Customers</div>
             </a>
@@ -56,12 +57,17 @@
       </li>
 
       <li class="menu-header small text-uppercase"><span class="menu-header-text">Add Products</span></li>
-      <li class="menu-item {{ request()->routeIs('admin.products.add') ? 'active open' : '' }}">
+      <li class="menu-item {{ request()->routeIs('admin.packageType*') ? 'active open' : '' }}">
         <a href="javascript:void(0);" class="menu-link menu-toggle">
           <i class="menu-icon tf-icons bx bx-detail"></i>
-          <div data-i18n="Form Elements">Add Products</div>
+          <div data-i18n="Form Elements">Products</div>
         </a>
         <ul class="menu-sub">
+          <li class="menu-item {{ request()->routeIs('admin.packageType') ? 'active' : '' }}">
+            <a href="{{ route('admin.packageType') }}" class="menu-link">
+              <div data-i18n="Input groups">Package Type</div>
+            </a>
+          </li>
           <li class="menu-item {{ request()->routeIs('admin.products.add') ? 'active' : '' }}">
             <a href="{{ route('admin.products.add') }}" class="menu-link">
               <div data-i18n="Input groups">Add Products</div>

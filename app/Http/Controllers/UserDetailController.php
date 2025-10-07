@@ -69,7 +69,7 @@ class UserDetailController extends Controller
 
         DB::transaction(function () use ($data, $request) {
             // 1) buat akun
-            $user = \App\Models\User::create([
+            $user = User::create([
                 'name'       => $data['name'],
                 'email'      => $data['email'],
                 'role'       => 'customer',
@@ -104,7 +104,7 @@ class UserDetailController extends Controller
         });
 
         return redirect()
-            ->route('admin.data.customers.create')
+            ->route('admin.data.customers')
             ->with('status', 'Detail + akun user berhasil dibuat.');
     }
 
@@ -137,30 +137,93 @@ class UserDetailController extends Controller
     public function edit(UserDetail $user_detail)
     {
         $users = User::select('id', 'name', 'email')->orderBy('name')->get();
-        return view('admin.customers.details.edit', ['detail' => $user_detail, 'users' => $users]);
+
+        // siapkan base64 untuk preview
+        $fotoKtp = null;
+        if (!empty($user_detail->foto_ktp_base64)) {
+            try {
+                $fotoKtp = $user_detail->foto_ktp_base64; // kalau tidak dienkripsi manual
+                // jika dulunya disimpan pakai Crypt::encryptString(), pakai:
+                // $fotoKtp = Crypt::decryptString($user_detail->foto_ktp_base64);
+            } catch (\Exception $e) {
+                $fotoKtp = null;
+            }
+        }
+
+        return view('admin.customers.details.edit', [
+            'detail'  => $user_detail,
+            'users'   => $users,
+            'fotoKtp' => $fotoKtp, // <<— penting untuk preview
+        ]);
     }
+
 
     public function update(Request $request, UserDetail $user_detail)
     {
+        // samakan rules dengan store:
         $data = $request->validate([
-            'user_id'       => ['required', 'exists:users,id', 'unique:user_details,user_id,' . $user_detail->id],
-            'mr'            => ['required', 'string', 'max:50', 'unique:user_details,mr,' . $user_detail->id],
-            'nik'           => ['required', 'string', 'max:32', 'unique:user_details,nik,' . $user_detail->id],
-            'alamat'        => ['required', 'string'],
-            'jenis_kelamin' => ['required', 'in:L,P'],
-            'tempat_lahir'  => ['required', 'string', 'max:100'],
-            'tanggal_lahir' => ['required', 'date'],
-            'bb_tb'         => ['nullable', 'string', 'max:20'],
-            'foto_ktp_base64' => ['nullable', 'string'],
-            'hp'            => ['nullable', 'string', 'max:30'],
-            'usia'          => ['nullable', 'integer', 'min:0', 'max:150'],
+            'mr'               => ['required', 'string', 'max:50', 'unique:user_details,mr,' . $user_detail->id],
+            'nik'              => ['required', 'string', 'max:32', 'unique:user_details,nik,' . $user_detail->id],
+            'alamat'           => ['required', 'string'],
+            'jenis_kelamin'    => ['required', 'in:L,P'],
+            'tempat_lahir'     => ['required', 'string', 'max:100'],
+            'tanggal_lahir'    => ['required', 'date'],
+            'bb_tb'            => ['nullable', 'string', 'max:20'],
+            'foto_ktp_base64'  => ['nullable', 'string'],                 // sama seperti store
+            'foto_ktp'         => ['nullable', 'file', 'image', 'max:2048'], // 2MB (sama dengan store)
+            'hp'               => ['nullable', 'string', 'max:30'],
+            'usia'             => ['nullable', 'integer', 'min:0', 'max:150'],
+
+            // akun login (samakan dengan store, tapi unique email diabaikan untuk user saat ini)
+            'name'             => ['required', 'string', 'max:255'],
+            'email'            => ['required', 'email', 'unique:users,email,' . $user_detail->user_id],
         ]);
 
-        $data['updated_by'] = Auth::id();
-        $user_detail->update($data);
+        DB::transaction(function () use ($data, $request, $user_detail) {
+            // 1) update akun user (name & email)
+            $user = $user_detail->user; // pastikan relasi ada: UserDetail belongsTo User
+            $user->update([
+                'name'       => $data['name'],
+                'email'      => $data['email'],
+                'updated_by' => \Illuminate\Support\Facades\Auth::id(),
+            ]);
 
-        return redirect()->route('admin.user-details.index')->with('status', 'Detail user berhasil diperbarui.');
+            // 2) siapkan payload untuk user_details
+            $payload = collect($data)->except(['name', 'email', 'foto_ktp'])->toArray();
+            $payload['updated_by'] = \Illuminate\Support\Facades\Auth::id();
+
+            // 3) tentukan foto_ktp_base64 (file / base64 / biarkan lama)
+            $newBase64 = null;
+
+            // a) jika upload file
+            if ($request->hasFile('foto_ktp') && $request->file('foto_ktp')->isValid()) {
+                $mime = $request->file('foto_ktp')->getMimeType(); // image/png atau image/jpeg
+                $bin  = file_get_contents($request->file('foto_ktp')->getRealPath());
+                $newBase64 = 'data:' . $mime . ';base64,' . base64_encode($bin);
+            }
+            // b) jika FE kirim base64 langsung
+            elseif (!empty($data['foto_ktp_base64'])) {
+                $raw = $data['foto_ktp_base64'];
+                $newBase64 = \Illuminate\Support\Str::startsWith($raw, 'data:')
+                    ? $raw
+                    : ('data:image/png;base64,' . $raw);
+            }
+
+            // hanya set kalau ada yang baru; kalau tidak ada, jangan timpa yg lama
+            if (!is_null($newBase64)) {
+                $payload['foto_ktp_base64'] = $newBase64;
+            } else {
+                unset($payload['foto_ktp_base64']);
+            }
+
+            // 4) update detail
+            $user_detail->update($payload);
+        });
+
+        return redirect()->route('admin.data.customer.detail')->with('status', 'Detail user berhasil diperbarui.');
     }
+
+
 
     public function destroy(UserDetail $user_detail)
     {

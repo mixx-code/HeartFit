@@ -12,7 +12,7 @@
       </div>
     @endif
 
-    <div class="card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+    <div class=" card-header d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 ">
                 {{-- Judul di kiri --}}
                 <h5 class="mb-0">Table Customers</h5>
 
@@ -50,7 +50,7 @@
                 </div>
             </div>
 
-    <div class="table-responsive text-nowrap">
+    <div class="table-responsive text-nowrap" style="min-height: 400px">
       <table class="table">
         <thead class="table-light">
           <tr>
@@ -86,7 +86,7 @@
                     <a class="dropdown-item" href="#"><i class="bx bx-edit-alt me-1"></i> Edit</a>
 
                     {{-- DELETE --}}
-                    <form action="{{ route('admin.destroy', $c['id']) }}" method="POST"
+                    <form action="{{ route('admin.data.customer.delete', $c['id']) }}" method="POST"
                           onsubmit="return confirm('Yakin hapus {{ $c['nama'] }}?');">
                       @csrf
                       @method('DELETE')

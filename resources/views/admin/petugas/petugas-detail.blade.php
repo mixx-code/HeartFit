@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Customer')
+@section('title', 'Detail Petugas/Admin')
 @section('content')
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="col-xl">
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Edit Data Customer</h5>
+                    <h5 class="mb-0">Edit Data Petugas/Admin</h5>
                     <small class="text-muted float-end">Perbarui data berikut</small>
                 </div>
 
@@ -28,7 +28,7 @@
                 {{-- ================== FORM ================== --}}
                 <div class="card-body">
                     @php
-                        // Format tanggal_lahir → YYYY-MM-DD agar <input type="date"> bisa prefill
+                        // tgl untuk input date
                         $tgl = old(
                             'tanggal_lahir',
                             $detail->tanggal_lahir
@@ -38,27 +38,29 @@
                                 : null,
                         );
 
-                        // Pecah bb_tb "54/167" → $bb=54, $tb=167 untuk prefill input angka
+                        // pecah BB/TB dari bb_tb
                         $bb = $tb = '';
                         if (!empty($detail->bb_tb)) {
                             [$bb, $tb] = array_pad(explode('/', $detail->bb_tb, 2), 2, '');
                             $bb = trim((string) $bb);
                             $tb = trim((string) $tb);
                         }
-                        $bb = old('berat_badan', $bb);
-                        $tb = old('tinggi_badan', $tb);
 
-                        // Siapkan sumber gambar KTP (untuk bagian bawah)
-                        $srcKtp = null;
-                        if (!empty($fotoKtp)) {
-                            $srcKtp = \Illuminate\Support\Str::startsWith($fotoKtp, 'data:')
-                                ? $fotoKtp
-                                : 'data:image/png;base64,' . $fotoKtp;
+                        // gunakan old() agar tetap muncul setelah validation error
+                        $bbVal = old('berat_badan', $bb);
+                        $tbVal = old('tinggi_badan', $tb);
+
+                        // usia: pakai DB kalau ada; kalau kosong dan ada tanggal_lahir, hitung otomatis
+                        $usiaCalc = null;
+                        if (empty($detail->usia) && !empty($detail->tanggal_lahir)) {
+                            $usiaCalc = \Illuminate\Support\Carbon::parse($detail->tanggal_lahir)->age;
                         }
+                        $usiaVal = old('usia', $detail->usia ?? $usiaCalc);
                     @endphp
 
-                    <form id="formCustomerEdit" method="POST"
-                        action="{{ route('admin.user-details.update', $detail->id) }}" enctype="multipart/form-data">
+
+                    <form id="formPetugasEdit" method="POST"
+                        action="{{ route('admin.data.petugas.update', $detail->id) }}">
                         @csrf
                         @method('PUT')
 
@@ -89,13 +91,27 @@
                             </div>
                         </div>
 
+                        {{-- Role --}}
                         <div class="mb-3">
                             <label class="form-label" for="role">Role</label>
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text"><i class="bx bx-shield-quarter"></i></span>
-                                <input type="text" id="role" name="role"
-                                    class="form-control @error('role') is-invalid @enderror"
-                                    value="{{ old('role', $detail->user->role) }}" readonly>
+                                <select id="role" name="role"
+                                    class="form-select @error('role') is-invalid @enderror" required>
+                                    <option value="">-- Pilih Role --</option>
+                                    <option value="admin"
+                                        {{ old('role', $detail->user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
+                                    <option value="ahli_gizi"
+                                        {{ old('role', $detail->user->role) === 'ahli_gizi' ? 'selected' : '' }}>Ahli Gizi
+                                    </option>
+                                    <option value="medical_record"
+                                        {{ old('role', $detail->user->role) === 'medical_record' ? 'selected' : '' }}>
+                                        Medical
+                                        Record</option>
+                                    <option value="bendahara"
+                                        {{ old('role', $detail->user->role) === 'bendahara' ? 'selected' : '' }}>Bendahara
+                                    </option>
+                                </select>
                                 @error('role')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -104,12 +120,13 @@
 
                         {{-- === Data Detail === --}}
                         <div class="mb-3">
-                            <label class="form-label" for="mr">Medical Record (MR)</label>
+                            <label class="form-label" for="mr">Medical Record (MR) <span
+                                    class="text-muted">(opsional)</span></label>
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text"><i class="bx bx-id-card"></i></span>
                                 <input type="text" id="mr" name="mr"
                                     class="form-control @error('mr') is-invalid @enderror"
-                                    value="{{ old('mr', $detail->mr) }}">
+                                    placeholder="Biarkan kosong jika tidak dipakai" value="{{ old('mr', $detail->mr) }}">
                                 @error('mr')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -180,12 +197,13 @@
                             <label class="form-label">Berat Badan / Tinggi Badan</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bx bx-body"></i></span>
-                                <input type="number" id="berat_badan" class="form-control" placeholder="Berat (kg)"
-                                    value="{{ $bb }}">
-                                <input type="number" id="tinggi_badan" class="form-control" placeholder="Tinggi (cm)"
-                                    value="{{ $tb }}">
+                                {{-- tambahkan name supaya old() berfungsi --}}
+                                <input type="number" id="berat_badan" name="berat_badan" class="form-control"
+                                    placeholder="Berat (kg)" value="{{ $bbVal }}">
+                                <input type="number" id="tinggi_badan" name="tinggi_badan" class="form-control"
+                                    placeholder="Tinggi (cm)" value="{{ $tbVal }}">
                             </div>
-                            {{-- field yang dipost ke server (sesuai validator) --}}
+                            {{-- field yang dipost ke server --}}
                             <input type="hidden" id="bb_tb" name="bb_tb"
                                 value="{{ old('bb_tb', $detail->bb_tb) }}">
                             <div class="form-text">Otomatis digabung format <code>BB/TB</code>, contoh:
@@ -212,35 +230,12 @@
                             <label class="form-label" for="usia">Usia</label>
                             <input type="number" id="usia" name="usia"
                                 class="form-control @error('usia') is-invalid @enderror" placeholder="Usia (tahun)"
-                                value="{{ old('usia', $detail->usia) }}">
+                                value="{{ $usiaVal }}">
                             @error('usia')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        {{-- ================== Preview KTP + Upload (DIPINDAH KE BAWAH) ================== --}}
-                        <hr class="my-4" />
-                        <h6 class="mb-3">Foto KTP</h6>
-                        <div class="d-flex flex-column align-items-center mb-4 text-center">
-                            {{-- Gambar KTP --}}
-                            <img src="{{ $srcKtp ?? asset('assets/img/placeholder-id.png') }}" alt="Foto KTP"
-                                class="rounded border mb-3" height="200" width="320" id="previewKtp" />
-
-                            {{-- Tombol upload & reset --}}
-                            <div class="button-wrapper">
-                                <label for="uploadKtp" class="btn btn-primary me-2 mb-2" tabindex="0">
-                                    <span class="d-none d-sm-inline">Upload KTP baru</span>
-                                    <i class="bx bx-upload d-inline d-sm-none"></i>
-                                    <input type="file" id="uploadKtp" class="account-file-input" hidden
-                                        accept="image/png,image/jpeg" name="foto_ktp" form="formCustomerEdit" />
-                                </label>
-                                <button type="button" class="btn btn-outline-secondary mb-2" id="resetKtpBtn">
-                                    <i class="bx bx-reset d-inline d-sm-none"></i>
-                                    <span class="d-none d-sm-inline">Reset</span>
-                                </button>
-                                <p class="text-muted mb-0">Allowed JPG/PNG. Max 800KB</p>
-                            </div>
-                        </div>
                         {{-- Pertahankan kondisi list saat kembali --}}
                         <input type="hidden" name="q" value="{{ request('q') }}">
                         <input type="hidden" name="per_page" value="{{ request('per_page') }}">
@@ -259,30 +254,8 @@
 
 @push('scripts')
     <script>
-        // Preview/reset KTP (tetap berfungsi meski dipindah ke bawah)
-        const upload = document.getElementById('uploadKtp');
-        const preview = document.getElementById('previewKtp');
-        const resetBtn = document.getElementById('resetKtpBtn');
-        const originalSrc = preview ? preview.src : null;
-
-        if (upload && preview) {
-            upload.addEventListener('change', (e) => {
-                const f = e.target.files?.[0];
-                if (!f) return;
-                const reader = new FileReader();
-                reader.onload = () => preview.src = reader.result;
-                reader.readAsDataURL(f);
-            });
-        }
-        if (resetBtn && preview && originalSrc) {
-            resetBtn.addEventListener('click', () => {
-                preview.src = originalSrc;
-                if (upload) upload.value = '';
-            });
-        }
-
-        // Gabungkan BB/TB saat submit
-        document.getElementById('formCustomerEdit')?.addEventListener('submit', function() {
+        // Gabungkan BB/TB saat submit (ID form yang benar)
+        document.getElementById('formPetugasEdit')?.addEventListener('submit', function() {
             const bb = document.getElementById('berat_badan')?.value?.trim();
             const tb = document.getElementById('tinggi_badan')?.value?.trim();
             const hidden = document.getElementById('bb_tb');

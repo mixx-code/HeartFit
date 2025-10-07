@@ -13,7 +13,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
   {{-- Favicon --}}
-  <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+  <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/heartfit_logo.png') }}" />
 
   {{-- Fonts --}}
   <link rel="preconnect" href="https://fonts.googleapis.com" />

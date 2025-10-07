@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
@@ -79,7 +81,7 @@ class UserController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dibuat');
+        return redirect()->route('admin.data.customers')->with('success', 'User berhasil dibuat');
     }
 
     public function edit(User $user)
@@ -109,12 +111,27 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        $user->update([
-            'deleted_by' => Auth::id(),
-        ]);
+        DB::transaction(function () use ($user) {
+            // Simpan siapa yang menghapus (kalau kolom tersedia)
+            if (Schema::hasColumn($user->getTable(), 'deleted_by')) {
+                $user->deleted_by = Auth::id();
+                $user->save();
+            }
 
-        $user->delete();
+            if (method_exists($user, 'detail')) {
+                $detail = $user->detail()->first();
+                if ($detail) {
+                    if (Schema::hasColumn($detail->getTable(), 'deleted_by')) {
+                        $detail->deleted_by = Auth::id();
+                        $detail->save();
+                    }
+                    $detail->delete(); // soft delete detail
+                }
+            }
 
-        return redirect()->route('users.index')->with('success', 'User berhasil dihapus');
+            $user->delete(); // soft delete user
+        });
+
+        return redirect()->route('admin.data.customers')->with('success', 'User & detail berhasil dihapus.');
     }
 }

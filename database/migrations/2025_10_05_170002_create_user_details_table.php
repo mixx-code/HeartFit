@@ -17,7 +17,7 @@ return new class extends Migration
             // relasi 1:1 ke users
             $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
 
-            $table->string('mr')->unique();            // Medical Record
+            $table->string('mr')->unique()->nullable();            // Medical Record
             $table->string('nik', 32)->unique();       // NIK
             $table->text('alamat');                    // Alamat
             $table->enum('jenis_kelamin', ['L', 'P']);  // L = laki, P = perempuan

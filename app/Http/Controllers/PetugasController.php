@@ -2,8 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\UserDetail;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class PetugasController extends Controller
 {
@@ -81,41 +87,29 @@ class PetugasController extends Controller
     /** LIST + SEARCH + PAGINATION */
     public function index(Request $request)
     {
-        $this->seedDummyIfNeeded();
+        $q       = trim((string) $request->input('q'));
+        $perPage = (int) $request->input('per_page', 10);
 
-        $data = session('petugas_dummy', []);
-
-        // === SEARCH (q) & PAGE SIZE (per_page) ===
-        $q       = trim($request->query('q', ''));
-        $perPage = (int) $request->query('per_page', 5);
-        if ($perPage <= 0) $perPage = 5;
-
-        // Filter semua kolom
-        $filtered = collect($data)->when($q !== '', function ($c) use ($q) {
-            $qLower = mb_strtolower($q);
-            return $c->filter(function ($row) use ($qLower) {
-                return collect($row)->contains(function ($val) use ($qLower) {
-                    return str_contains(mb_strtolower((string)$val), $qLower);
+        $petugas = User::query()
+            ->where('role', '!=', 'customer')
+            ->with(['detail:id,user_id,mr,nik']) // biar bisa akses $c->detail tanpa N+1
+            ->when($q, function ($qb) use ($q) {
+                $qb->where(function ($b) use ($q) {
+                    $b->where('name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%")
+                        ->orWhereHas('detail', function ($d) use ($q) {
+                            $d->where('mr', 'like', "%{$q}%")
+                                ->orWhere('nik', 'like', "%{$q}%");
+                        });
                 });
-            })->values();
-        }, fn($c) => $c);
-
-        // Pagination manual
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $items       = $filtered->slice(($currentPage - 1) * $perPage, $perPage)->values();
-
-        $paginator = new LengthAwarePaginator(
-            $items,
-            $filtered->count(),
-            $perPage,
-            $currentPage,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+            })
+            ->orderByDesc('created_at')
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('admin.petugas.petugas', [
-            'petugas' => $paginator,
-            'q'       => $q,
-            'perPage' => $perPage,
+            'petugas' => $petugas,
+            'perPage'   => $perPage,
         ]);
     }
 
@@ -129,95 +123,165 @@ class PetugasController extends Controller
     /** STORE (simpan data baru ke session) */
     public function store(Request $request)
     {
+        // Validasi form sesuai input di Blade
         $validated = $request->validate([
-            'nama'           => 'required|string|max:255',
-            'nik'            => 'required|string|max:30',
-            'alamat'         => 'required|string',
-            'jenis_kelamin'  => 'required|in:Laki-laki,Perempuan',
-            'tempat_lahir'   => 'required|string|max:100',
-            'tanggal_lahir'  => 'required|date',
-            'posisi_jabatan' => 'required|string|max:100',
-            'email'          => 'required|email',
-            'hp'             => 'required|string|max:20',
+            'nama'          => 'required|string|max:255',
+            'role'          => 'required|string',
+            'email'         => 'required|string|email|max:255|unique:users,email',
+            'nik'           => 'nullable|string|max:50',
+            'alamat'        => 'nullable|string',
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'tempat_lahir'  => 'nullable|string|max:100',
+            'tanggal_lahir' => 'nullable|date',
+            'hp'            => 'nullable|string|max:25',
         ]);
 
-        // gabung ttl (tempat, tgl)
-        $validated['ttl'] = $validated['tempat_lahir'] . ', ' . \Carbon\Carbon::parse($validated['tanggal_lahir'])->translatedFormat('d F Y');
-        unset($validated['tempat_lahir'], $validated['tanggal_lahir']);
+        // Buat akun user dengan password default
+        $user = User::create([
+            'name'       => $request->nama,
+            'role'       => $request->role,
+            'email'      => $request->email,
+            'password'   => Hash::make('password123!'),
+            'created_by' => Auth::id(),
+        ]);
 
-        // Ambil data lama & next id
-        $rows  = session('petugas_dummy', []);
-        $newId = count($rows) ? max(array_column($rows, 'id')) + 1 : 1;
-        $validated['id'] = $newId;
 
-        $rows[] = $validated;
-        session(['petugas_dummy' => $rows]);
-
-        return redirect()->route('petugas.index')->with('status', 'Petugas berhasil ditambahkan.');
-    }
-
-    /** FORM EDIT */
-    public function edit($id, Request $request)
-    {
-        $this->seedDummyIfNeeded();
-
-        $rows  = session('petugas_dummy', []);
-        $found = collect($rows)->firstWhere('id', (int)$id);
-
-        if (!$found) {
-            abort(404, 'Petugas tidak ditemukan');
+        // Kalau ada tabel `user_details`, bisa simpan data tambahan di sana
+        if (class_exists(UserDetail::class)) {
+            UserDetail::create([
+                'user_id'       => $user->id,
+                'nik'           => $request->nik,
+                'alamat'        => $request->alamat,
+                'jenis_kelamin' => $request->jenis_kelamin,
+                'tempat_lahir'  => $request->tempat_lahir,
+                'tanggal_lahir' => $request->tanggal_lahir,
+                'bb_tb'         => $request->bb_tb,   // <<— penting!
+                'hp'            => $request->hp,
+                'created_by'    => Auth::id(),
+            ]);
         }
 
-        return view('petugas-edit', ['petugas' => $found]);
+        return redirect()
+            ->route('admin.data.petugas')
+            ->with('success', 'Akun petugas berhasil dibuat dengan password default: password123!');
+    }
+
+    public function show(UserDetail $user_detail)
+    {
+        // ambil relasi user
+        $user_detail->load('user:id,name,email,role,password');
+
+        // decrypt foto ktp (kalau pakai manual Crypt::encryptString)
+        $fotoKtp = null;
+        if (!empty($user_detail->foto_ktp_base64)) {
+            try {
+                // kalau pakai cast 'encrypted', ini sudah otomatis plaintext base64
+                $fotoKtp = $user_detail->foto_ktp_base64;
+
+                // kalau kamu simpan manual pakai Crypt::encryptString(), gunakan:
+                // $fotoKtp = Crypt::decryptString($user_detail->foto_ktp_base64);
+            } catch (\Exception $e) {
+                $fotoKtp = null;
+            }
+        }
+
+        return view('admin.petugas.petugas-detail', [
+            'detail'   => $user_detail,
+            'fotoKtp'  => $fotoKtp,
+        ]);
+    }
+    /** FORM EDIT */
+    public function edit(UserDetail $user_detail)
+    {
+        $users = User::select('id', 'name', 'email')->orderBy('name')->get();
+
+        // siapkan base64 untuk preview
+        $fotoKtp = null;
+        if (!empty($user_detail->foto_ktp_base64)) {
+            try {
+                $fotoKtp = $user_detail->foto_ktp_base64; // kalau tidak dienkripsi manual
+                // jika dulunya disimpan pakai Crypt::encryptString(), pakai:
+                // $fotoKtp = Crypt::decryptString($user_detail->foto_ktp_base64);
+            } catch (\Exception $e) {
+                $fotoKtp = null;
+            }
+        }
+
+        return view('admin.petugas.details.edit', [
+            'detail'  => $user_detail,
+            'users'   => $users,
+            'fotoKtp' => $fotoKtp, // <<— penting untuk preview
+        ]);
     }
 
     /** UPDATE DATA */
-    public function update($id, Request $request)
+    public function update(Request $request, UserDetail $user_detail)
     {
-        $this->seedDummyIfNeeded();
-
-        $rows = session('petugas_dummy', []);
-
-        // Validasi mirip store, tetapi di edit ttl langsung string (biar sama dengan customers.update milikmu)
-        $validated = $request->validate([
-            'nama'           => ['required', 'string', 'max:255'],
-            'nik'            => ['required', 'string', 'max:30'],
-            'alamat'         => ['required', 'string'],
-            'jenis_kelamin'  => ['required', 'in:Laki-laki,Perempuan'],
-            'ttl'            => ['required', 'string', 'max:100'],
-            'posisi_jabatan' => ['required', 'string', 'max:100'],
-            'email'          => ['required', 'email', 'max:100'],
-            'hp'             => ['required', 'string', 'max:20'],
+        // update user
+        $request->validate([
+            'name'  => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user_detail->user_id,
+            'role'  => 'required|string|in:admin,ahli_gizi,medical_record,bendahara',
+            // validasi detail opsional:
+            'mr'            => 'nullable|string|max:100',
+            'nik'           => 'nullable|string|max:50',
+            'alamat'        => 'nullable|string',
+            'jenis_kelamin' => 'nullable|in:L,P',
+            'tempat_lahir'  => 'nullable|string|max:100',
+            'tanggal_lahir' => 'nullable|date',
+            'bb_tb'         => 'nullable|string', // format "60/170"
+            'hp'            => 'nullable|string|max:25',
+            'usia'          => 'nullable|integer|min:0',
         ]);
 
-        foreach ($rows as &$row) {
-            if ((string)($row['id'] ?? '') === (string)$id) {
-                $row = array_merge($row, $validated);
-                break;
-            }
-        }
-        unset($row);
+        $user = $user_detail->user;
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+        ]);
 
-        session(['petugas_dummy' => $rows]);
+        $user_detail->update([
+            'mr'            => $request->mr,
+            'nik'           => $request->nik,
+            'alamat'        => $request->alamat,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'tempat_lahir'  => $request->tempat_lahir,
+            'tanggal_lahir' => $request->tanggal_lahir,
+            'bb_tb'         => $request->bb_tb,
+            'hp'            => $request->hp,
+            'usia'          => $request->usia,
+            'updated_by'    => Auth::id(),
+        ]);
 
-        return redirect()
-            ->route('petugas.index', $request->only('q', 'per_page', 'page'))
-            ->with('status', 'Data petugas diperbarui.');
+        return back()->with('success', 'Data petugas berhasil diperbarui.');
     }
 
+
     /** DELETE */
-    public function destroy($id, Request $request)
+    public function destroy(User $user)
     {
-        $rows = session('petugas_dummy', []);
+        DB::transaction(function () use ($user) {
+            if (Schema::hasColumn($user->getTable(), 'deleted_by')) {
+                // updateQuietly supaya tidak trigger event yang aneh
+                $user->forceFill(['deleted_by' => Auth::id()])->saveQuietly();
+            }
 
-        $rows = array_values(array_filter($rows, function ($row) use ($id) {
-            return (string)($row['id'] ?? '') !== (string)$id;
-        }));
+            if (method_exists($user, 'detail')) {
+                $detail = $user->detail()->first();
+                if ($detail) {
+                    if (Schema::hasColumn($detail->getTable(), 'deleted_by')) {
+                        $detail->forceFill(['deleted_by' => Auth::id()])->saveQuietly();
+                    }
+                    $detail->delete(); // soft delete detail
+                }
+            }
 
-        session(['petugas_dummy' => $rows]);
+            $user->delete(); // soft delete user
+        });
 
         return redirect()
-            ->route('petugas.index', $request->only('q', 'per_page', 'page'))
-            ->with('status', 'Data petugas telah dihapus.');
+            ->route('admin.data.petugas') // ini tadinya ke customers, kemungkinan typo
+            ->with('status', 'User berhasil dihapus.');
     }
 }
