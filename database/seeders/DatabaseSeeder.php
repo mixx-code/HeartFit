@@ -72,6 +72,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PackageTypeSeeder::class, // wajib duluan
             MealPackagesSeeder::class,
+            MenuMakananSeeder::class
         ]);
     }
 }

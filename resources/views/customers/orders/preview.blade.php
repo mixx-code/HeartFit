@@ -16,11 +16,55 @@
             <dt class="col-sm-4">Kategori</dt>
             <dd class="col-sm-8">{{ $summary['package_category'] }}</dd>
 
-            <dt class="col-sm-4">Periode</dt>
-            <dd class="col-sm-8">{{ $summary['start_date'] }} s/d {{ $summary['end_date'] }} ({{ $summary['days'] }} hari)</dd>
+            <dt class="col-sm-4">Batch</dt>
+            <dd class="col-sm-8">{{ $summary['package_batch'] ?? '-' }}</dd>
 
-            <dt class="col-sm-4">Harga</dt>
+            <dt class="col-sm-4">Periode</dt>
+            <dd class="col-sm-8">
+              {{ $summary['start_date'] }} s/d {{ $summary['end_date'] }} ({{ $summary['days'] }} hari)
+              @if(!empty($summary['service_dates']))
+                <button class="btn btn-link btn-sm p-0 ms-1 align-baseline" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#serviceDatesCollapse">
+                  lihat tanggal
+                </button>
+              @endif
+            </dd>
+
+            @if(!empty($summary['service_dates']))
+              <dt class="col-sm-4"></dt>
+              <dd class="col-sm-8">
+                <div id="serviceDatesCollapse" class="collapse">
+                  <div class="border rounded p-2 bg-light small">
+                    @foreach($summary['service_dates'] as $d)
+                      <span class="badge rounded-pill text-bg-light border text-dark me-1 mb-1">{{ $d }}</span>
+                    @endforeach
+                  </div>
+                </div>
+              </dd>
+            @endif
+
+            <dt class="col-sm-4">List Menu</dt>
+            <dd class="col-sm-8">
+              {{ $summary['unique_menu_count'] ?? 0 }} menu
+              @if(!empty($summary['unique_menus']))
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                  @foreach(array_slice($summary['unique_menus'],0,8) as $m)
+                    <span class="badge text-bg-light border text-black">{{ $m }}</span>
+                  @endforeach
+                  @if(($summary['unique_menu_count'] ?? count($summary['unique_menus'])) > 8)
+                    <span class="badge text-bg-secondary">
+                      +{{ ($summary['unique_menu_count'] ?? count($summary['unique_menus'])) - 8 }} lainnya
+                    </span>
+                  @endif
+                </div>
+              @endif
+            </dd>
+
+            <dt class="col-sm-4">Harga Paket</dt>
             <dd class="col-sm-8">Rp {{ number_format($summary['package_price'],0,',','.') }}</dd>
+
+            <dt class="col-sm-4">Total Tagihan</dt>
+            <dd class="col-sm-8 fw-semibold">Rp {{ number_format($summary['amount_total'],0,',','.') }}</dd>
 
             <dt class="col-sm-4">Metode Bayar</dt>
             <dd class="col-sm-8">{{ strtoupper(str_replace('_',' ',$summary['payment_method'])) }}</dd>
@@ -35,14 +79,23 @@
         {{-- Tombol PESAN: Simpan ke DB --}}
         <form action="{{ route('orders.store') }}" method="POST" class="ms-auto">
           @csrf
-          <input type="hidden" name="package_key"      value="{{ $summary['package_key'] }}">
-          <input type="hidden" name="package_label"    value="{{ $summary['package_label'] }}">
-          <input type="hidden" name="package_category" value="{{ $summary['package_category'] }}">
-          <input type="hidden" name="package_price"    value="{{ $summary['package_price'] }}">
-          <input type="hidden" name="start_date"       value="{{ $summary['start_date'] }}">
-          <input type="hidden" name="end_date"         value="{{ $summary['end_date'] }}">
-          <input type="hidden" name="days"             value="{{ $summary['days'] }}">
-          <input type="hidden" name="payment_method"   value="{{ $summary['payment_method'] }}">
+
+  {{-- Core --}}
+  <input type="hidden" name="package_key"       value="{{ $summary['package_key'] }}">
+  <input type="hidden" name="package_label"     value="{{ $summary['package_label'] }}">
+  <input type="hidden" name="package_category"  value="{{ $summary['package_category'] }}">
+  <input type="hidden" name="package_batch"     value="{{ $summary['package_batch'] ?? '' }}">
+  <input type="hidden" name="package_price"     value="{{ $summary['package_price'] }}">
+  <input type="hidden" name="amount_total"      value="{{ $summary['amount_total'] }}">
+  <input type="hidden" name="start_date"        value="{{ $summary['start_date'] }}">
+  <input type="hidden" name="end_date"          value="{{ $summary['end_date'] }}">
+  <input type="hidden" name="days"              value="{{ $summary['days'] }}">
+  <input type="hidden" name="payment_method"    value="{{ $summary['payment_method'] }}">
+  {{-- Step 3 arrays as JSON --}}
+  <input type="hidden" name="service_dates"     value='@json($summary["service_dates"])'>
+  <input type="hidden" name="unique_menus"      value='@json($summary["unique_menus"])'>
+  <input type="hidden" name="unique_menu_count" value="{{ $summary['unique_menu_count'] }}">
+
           <button type="submit" class="btn btn-success">
             Pesan
           </button>
@@ -57,7 +110,37 @@
           <pre class="mb-0" style="white-space: pre-wrap;">{{ $json }}</pre>
         </div>
       </div>
+
+      @if(!empty($summary['unique_menus']))
+      <div class="card border-0 shadow-sm mt-3">
+        <div class="card-header bg-light fw-semibold">Detail Menu Unik</div>
+        <div class="card-body small">
+          <ul class="mb-0">
+            @foreach($summary['unique_menus'] as $m)
+              <li>{{ $m }}</li>
+            @endforeach
+          </ul>
+        </div>
+      </div>
+      @endif
     </div>
   </div>
 </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.querySelector('button[form="placeOrderForm"]');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      const f = document.getElementById('placeOrderForm');
+      if (!f) return;
+      f.setAttribute('action', '{{ route('orders.store') }}');
+      f.setAttribute('method', 'POST');
+    });
+  }
+});
+</script>
+
+@endpush
+
 @endsection

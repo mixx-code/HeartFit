@@ -56,21 +56,26 @@
         </ul>
       </li>
 
-      <li class="menu-header small text-uppercase"><span class="menu-header-text">Add Products</span></li>
-      <li class="menu-item {{ request()->routeIs('admin.packageType*') ? 'active open' : '' }}">
+      <li class="menu-header small text-uppercase"><span class="menu-header-text">Package/Menu</span></li>
+      <li class="menu-item {{ request()->routeIs('admin.packageType*') ||  request()->routeIs('admin.mealPackage*') || request()->routeIs('admin.menuMakanan*') ? 'active open' : '' }}">
         <a href="javascript:void(0);" class="menu-link menu-toggle">
           <i class="menu-icon tf-icons bx bx-detail"></i>
-          <div data-i18n="Form Elements">Products</div>
+          <div data-i18n="Form Elements">Package/Menu</div>
         </a>
         <ul class="menu-sub">
-          <li class="menu-item {{ request()->routeIs('admin.packageType') ? 'active' : '' }}">
+          <li class="menu-item {{ request()->routeIs('admin.packageType*') ? 'active' : '' }}">
             <a href="{{ route('admin.packageType') }}" class="menu-link">
               <div data-i18n="Input groups">Package Type</div>
             </a>
           </li>
-          <li class="menu-item {{ request()->routeIs('admin.products.add') ? 'active' : '' }}">
-            <a href="{{ route('admin.products.add') }}" class="menu-link">
-              <div data-i18n="Input groups">Add Products</div>
+          <li class="menu-item {{ request()->routeIs('admin.mealPackage*') ? 'active' : '' }}">
+            <a href="{{ route('admin.mealPackage') }}" class="menu-link">
+              <div data-i18n="Input groups">Meal Package</div>
+            </a>
+          </li>
+          <li class="menu-item {{ request()->routeIs('admin.menuMakanan') ? 'active' : '' }}">
+            <a href="{{ route('admin.menuMakanan') }}" class="menu-link">
+              <div data-i18n="Input groups">Menu Makanan</div>
             </a>
           </li>
         </ul>

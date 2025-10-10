@@ -6,6 +6,8 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\MealPackagesController;
+use App\Http\Controllers\MenuMakananController;
 use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\UserController;
@@ -58,7 +60,6 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
             ->name('admin.data.customer.delete');
 
         // akhir data customers
-        Route::resource('user-details', UserDetailController::class);
 
         // route package type
 
@@ -69,6 +70,39 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::get('/admin/packageType', [PackageTypeController::class, 'index'])->name('admin.packageType');
         
         // akhir route package type
+
+        // route meal package
+
+        Route::get('/admin/mealPackage/addMealPackage', [MealPackagesController::class, 'create'])->name('admin.mealPackage.addMealPackage');
+
+        Route::post('/admin/mealPackage/store', [MealPackagesController::class, 'store'])->name('admin.mealPackage.store');
+
+        Route::get('/admin/mealPackage', [MealPackagesController::class, 'index'])->name('admin.mealPackage');
+
+        Route::get('/admin/mealPackage/edit/{mealPackage}', [MealPackagesController::class, 'edit'])->name('admin.mealPackage.edit');
+
+        Route::put('/admin/mealPackage/edit/{mealPackage}', [MealPackagesController::class, 'update'])->name('admin.mealPackage.update');
+
+        Route::delete('/admin/mealPackage/delete/{mealPackage}', [MealPackagesController::class, 'destroy'])
+            ->name('admin.mealPackage.delete');
+        
+        // akhir route meal package
+
+        // route menu makanan
+
+        Route::get('/admin/menuMakanan', [MenuMakananController::class, 'index'])->name('admin.menuMakanan');
+        Route::get('/admin/menuMakanan/addMenuMakanan', [MenuMakananController::class, 'create'])->name('admin.menuMakanan.addMenuMakanan');
+
+        Route::post('/admin/menuMakanan/store', [MenuMakananController::class, 'store'])->name('admin.menuMakanan.store');
+
+        Route::get('/admin/menuMakanan/edit/{menuMakanan}', [MenuMakananController::class, 'edit'])->name('admin.menuMakanan.edit');
+
+        Route::put('/admin/menuMakanan/edit/{menuMakanan}', [MenuMakananController::class, 'update'])->name('admin.menuMakanan.update');
+
+        Route::delete('/admin/menuMakanan/delete/{menuMakanan}', [MenuMakananController::class, 'destroy'])
+            ->name('admin.menuMakanan.delete');
+        
+        // akhir route menu makanan
 
         // route products
         // Route::get('/admin/products/packageType', PackageTypeController::class, 'index')->name('admin.products.packageType');
@@ -102,20 +136,20 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::get('/orders/{order}/status', [OrderController::class, 'statusJson'])->name('orders.status');
         Route::post('/orders/{order}/snap-result', [OrderController::class, 'snapResult'])
             ->name('orders.snap_result');
+            // Public steps
+        Route::get('/orders/create',   [OrderController::class, 'create'])->name('orders.create');
+        Route::post('/orders/preview', [OrderController::class, 'preview'])->name('orders.preview');
+            
+            // Webhook (jangan lupa exclude CSRF di VerifyCsrfToken)
+        Route::post('/midtrans/webhook', [OrderController::class, 'webhook'])->name('midtrans.webhook');
+        Route::get('/whoami', function () {
+            return [
+                'auth' => Auth::check(),
+                'id'   => Auth::id(),
+                'user' => Auth::user(),
+                'session_id' => session()->getId(),
+            ];
+        })->middleware('web');
     });
 });
 
-// Public steps
-Route::get('/orders/create',   [OrderController::class, 'create'])->name('orders.create');
-Route::post('/orders/preview', [OrderController::class, 'preview'])->name('orders.preview');
-
-// Webhook (jangan lupa exclude CSRF di VerifyCsrfToken)
-Route::post('/midtrans/webhook', [OrderController::class, 'webhook'])->name('midtrans.webhook');
-Route::get('/whoami', function () {
-    return [
-        'auth' => Auth::check(),
-        'id'   => Auth::id(),
-        'user' => Auth::user(),
-        'session_id' => session()->getId(),
-    ];
-})->middleware('web');

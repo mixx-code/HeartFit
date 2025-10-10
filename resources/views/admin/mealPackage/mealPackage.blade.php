@@ -17,7 +17,7 @@
 
       <div class="d-flex flex-column flex-md-row align-items-md-center gap-2">
         {{-- Search + Page size (GET) --}}
-        <form class="d-flex align-items-center gap-2" method="GET" action="{{ route('admin.meal-packages.index') }}">
+        <form class="d-flex align-items-center gap-2" method="GET" action="{{ route('admin.mealPackage') }}">
           <div class="input-group" style="min-width: 280px;">
             <span class="input-group-text"><i class="bx bx-search"></i></span>
             <input type="search" name="q" value="{{ request('q') }}" class="form-control"
@@ -36,13 +36,13 @@
           <button class="btn btn-primary" type="submit">Search</button>
 
           @if (request('q'))
-            <a href="{{ route('admin.meal-packages.index', ['per_page' => request('per_page', $perPage)]) }}"
+            <a href="{{ route('admin.mealPackage', ['per_page' => request('per_page', $perPage)]) }}"
                class="btn btn-outline-secondary">Reset</a>
           @endif
         </form>
 
         {{-- Tambah --}}
-        <a class="btn btn-success" href="{{ route('admin.meal-packages.create') }}">
+        <a class="btn btn-success" href="{{ route('admin.mealPackage.addMealPackage') }}">
           <i class="bi bi-plus-circle"></i> Tambah Meal Package
         </a>
       </div>
@@ -53,10 +53,13 @@
         <thead class="table-light">
           <tr>
             <th>ID</th>
+            <th>Nama Meal Package</th>
             <th>Batch</th>
             <th>Jenis Paket</th>
             <th>Porsi Paket</th>
+            <th>Total Hari</th>
             <th>Detail Paket</th>
+            <th>Price</th>
             <th>Package Type</th>
             <th>Created At</th>
             <th>Updated At</th>
@@ -67,10 +70,13 @@
           @forelse($packages as $p)
             <tr>
               <td>{{ $p->id }}</td>
+              <td>{{ $p->nama_meal_package }}</td>
               <td>{{ $p->batch ?? '—' }}</td>
               <td class="text-capitalize">{{ $p->jenis_paket }}</td>
               <td>{{ $p->porsi_paket }}</td>
+              <td>{{ $p->total_hari }}</td>
               <td>{{ $p->detail_paket }}</td>
+              <td>Rp. {{ number_format($p->price, 0, ',', '.') }}</td>
               <td>{{ optional($p->packageType)->packageType ?? '—' }}</td>
               <td>{{ $p->created_at }}</td>
               <td>{{ $p->updated_at }}</td>
@@ -80,11 +86,12 @@
                     <i class="bx bx-dots-vertical-rounded"></i>
                   </button>
                   <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{{ route('admin.meal-packages.edit', $p->id) }}">
+                    <a class="dropdown-item" href="{{ route('admin.mealPackage.edit', $p->id) }}">
                       <i class="bx bx-edit-alt me-1"></i> Edit
                     </a>
 
-                    <form action="{{ route('admin.meal-packages.destroy', $p->id) }}"
+                    <form 
+                    action="{{ route('admin.mealPackage.delete', $p->id) }}"
                           method="POST"
                           onsubmit="return confirm('Yakin hapus paket ini?');">
                       @csrf
