@@ -9,7 +9,7 @@
 
       <div class="d-flex flex-column flex-md-row align-items-md-center gap-2">
         {{-- Search + Page size (GET) --}}
-        <form class="d-flex align-items-center gap-2" method="GET" action="{{ route('orders.index') /* ganti ke route index orders milikmu jika berbeda */ }}">
+        <form class="d-flex align-items-center gap-2" method="GET" action="{{ route('customer.orders.index') /* ganti ke route index orders milikmu jika berbeda */ }}">
           <div class="input-group" style="min-width: 280px;">
             <span class="input-group-text"><i class="bx bx-search"></i></span>
             <input type="search" name="q" value="{{ request('q') }}" class="form-control"
@@ -106,7 +106,7 @@
           @empty
             <tr>
               <td colspan="7" class="text-center text-muted">
-                Tidak ada data{{ request('q') ? ' untuk pencarian ini' : '' }}.
+                Kamu Tidak Memiliki Order{{ request('q') ? ' untuk pencarian ini' : '' }}.
               </td>
             </tr>
           @endforelse

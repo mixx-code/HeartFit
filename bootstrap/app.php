@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\BlockOrderWindowFromDB;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Middleware role buatanmu:
             'role' => CheckRole::class,   // pastikan class-nya ada & benar
             'session.timeout' => \App\Http\Middleware\SessionTimeout::class,
+            'block.order.window.db' => BlockOrderWindowFromDB::class,
         ]);
 
         // Kalau sebelumnya kamu bikin 'auth.session' custom, HAPUS aja alias itu.

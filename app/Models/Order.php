@@ -28,8 +28,8 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date'   => 'date',
+        'start_date' => 'datetime',
+        'end_date'   => 'datetime',
         'paid_at'    => 'datetime',
         'service_dates'     => 'array',
         'unique_menus'      => 'array',
@@ -43,6 +43,8 @@ class Order extends Model
     protected $attributes = [
         'status' => 'pending',
     ];
+
+    
 
     // Normalisasi: jaga agar harga selalu integer (rupiah)
     protected function packagePrice(): Attribute
@@ -77,7 +79,7 @@ class Order extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 }
 

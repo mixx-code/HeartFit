@@ -20,18 +20,6 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
-    // mapping statis paket (tanpa DB)
-    private array $packages = [
-        'reguler_harian'   => ['label' => 'Reguler (Harian)',    'category' => 'Reguler', 'price' =>  50000],
-        'reguler_mingguan' => ['label' => 'Mingguan (Reguler)',  'category' => 'Reguler', 'price' => 400000],
-        'reguler_bulanan'  => ['label' => 'Bulanan (Reguler)',   'category' => 'Reguler', 'price' => 1180000],
-        'reguler_3bulanan' => ['label' => '3 Bulanan (Reguler)', 'category' => 'Reguler', 'price' => 3540000],
-        'premium_ekspress' => ['label' => 'Ekspress (Premium)',  'category' => 'Premium', 'price' => 170000],
-        'premium_mingguan' => ['label' => 'Mingguan (Premium)',  'category' => 'Premium', 'price' => 650000],
-        'premium_bulanan'  => ['label' => 'Bulanan (Premium)',   'category' => 'Premium', 'price' => 1950000],
-        'premium_3bulanan' => ['label' => '3 Bulanan (Premium)', 'category' => 'Premium', 'price' => 5830000],
-    ];
-
     public function index()
     {
         $q = request('q');
@@ -48,6 +36,44 @@ class OrderController extends Controller
 
         return view('customers.orders.index', compact('orders', 'perPage'));
     }
+
+    public function viewOrderByAdmin()
+    {
+        $q = request('q');
+        $perPage = (int) request('per_page', 10);
+
+        $orders = Order::query()
+            // eager-load user dan user.detail (hemat N+1)
+            ->with([
+                'user:id,name,email,deleted_at',// sesuaikan kolom di user_details-mu
+            ])
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('order_number', 'like', "%{$q}%")
+                        ->orWhere('package_label', 'like', "%{$q}%")
+                        ->orWhere('package_category', 'like', "%{$q}%")
+                        ->orWhere('status', 'like', "%{$q}%")
+                        // cari di users (name/email)
+                        ->orWhereHas('user', function ($uq) use ($q) {
+                            $uq->withTrashed()
+                                ->where('name', 'like', "%{$q}%")
+                                ->orWhere('email', 'like', "%{$q}%");
+                        })
+                        // cari di user_details (phone/address)
+                        ->orWhereHas('user.detail', function ($dq) use ($q) {
+                            $dq->where('phone', 'like', "%{$q}%")
+                                ->orWhere('address', 'like', "%{$q}%");
+                        });
+                });
+            })
+            ->latest('id')
+            ->paginate($perPage);
+
+        // dd($orders);
+
+        return view('admin.orders.index', compact('orders', 'perPage'));
+    }
+
 
 
     public function create()

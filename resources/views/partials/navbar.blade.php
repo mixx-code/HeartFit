@@ -12,7 +12,9 @@
               <!-- Search -->
               <div class="navbar-nav align-items-center">
                 <div class="nav-item d-flex align-items-center">
-                  <h5 class="card-header">Nama Administrator</h5>
+                  @if (Auth::check())
+                  <h5 class="card-header">{{ Auth::user()->name }}</h5>
+                  @endif
                   <i class="d-none bx bx-search fs-4 lh-0"></i>
                   <input
                     type="text"
@@ -57,8 +59,10 @@
                             </div>
                           </div>
                           <div class="flex-grow-1">
-                            <span class="fw-semibold d-block">John Doe</span>
-                            <small class="text-muted">Admin</small>
+                            @if (Auth::check())
+                            <span class="fw-semibold d-block">{{ Auth::user()->name }}</span>
+                            <small class="text-muted">{{ Auth::user()->role }}</small>
+                            @endif
                           </div>
                         </div>
                       </a>

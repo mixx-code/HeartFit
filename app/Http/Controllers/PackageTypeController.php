@@ -2,90 +2,83 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\packageType;
-use App\Http\Requests\StorepackageTypeRequest;
+use App\Models\PackageType; // pastikan ini PascalCase
 use App\Http\Requests\UpdatepackageTypeRequest;
 use Illuminate\Http\Request;
 
 class PackageTypeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $q = trim((string) $request->input('q'));
         $perPage = (int) $request->input('per_page', 10);
 
         $packageTypes = PackageType::query()
-            ->select("*")
-            ->when($q, function ($qb) use ($q) {
-                $qb->where('packageType', 'like', "%{$q}%");
-            })
+            ->when($q, fn($qb) => $qb->where('packageType', 'like', "%{$q}%"))
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
 
-
         return view('admin.packageType.packageType', [
             'packageTypes' => $packageTypes,
-            'perPage'   => $perPage,
+            'perPage'      => $perPage,
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('admin.packageType.addPackageType');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
             'packageType' => 'required|string|max:50',
         ]);
 
-        packageType::create([
-            'packageType' => $request->packageType
+        PackageType::create([
+            'packageType' => $request->packageType,
         ]);
 
-        return redirect()->route('admin.packageType')->with('success', 'Package type berhasil ditambahkan');
+        return redirect()
+            ->route('admin.packageType')
+            ->with('success', 'Package type berhasil ditambahkan');
     }
 
     /**
-     * Display the specified resource.
+     * EDIT: Ambil data by id lalu kirim ke view edit
      */
-    public function show(packageType $packageType)
+    public function edit(PackageType $packageType)
     {
-        //
+        return view('admin.packageType.editPackageType', [
+            'packageType' => $packageType,
+        ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * UPDATE: Simpan perubahan dari form edit
      */
-    public function edit(packageType $packageType)
+    public function update(Request $request, PackageType $packageType)
     {
-        //
+        $data = $request->validate([
+            'packageType' => 'required|string|max:50',
+        ]);
+
+        $packageType->update($data);
+        return redirect()
+            ->route('admin.packageType')
+            ->with('success', 'Package type berhasil diperbarui');
     }
 
     /**
-     * Update the specified resource in storage.
+     * DESTROY: Hapus by id
      */
-    public function update(UpdatepackageTypeRequest $request, packageType $packageType)
+    public function destroy(PackageType $packageType)
     {
-        //
-    }
+        $packageType->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(packageType $packageType)
-    {
-        //
+        return redirect()
+            ->route('admin.packageType')
+            ->with('success', 'Package type berhasil dihapus');
     }
 }

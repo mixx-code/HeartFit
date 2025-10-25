@@ -67,7 +67,7 @@
 
     <div class="text-center">
       <a href="{{ route('orders.create') }}" class="btn btn-primary mt-2">Pesan Lagi</a>
-      <a href="{{ route('orders.index') }}" class="btn btn-outline-secondary mt-2">Liat Orderan Kamu</a>
+      <a href="{{ route('customer.orders.index') }}" class="btn btn-outline-secondary mt-2">Liat Orderan Kamu</a>
     </div>
 
     {{-- Ringkasan --}}

@@ -73,16 +73,13 @@
                     <i class="bx bx-dots-vertical-rounded"></i>
                   </button>
                   <div class="dropdown-menu">
-                    <a class="dropdown-item" href="">
+                    <a class="dropdown-item" href="{{ route('admin.packageType.edit', $t->id) }}">
                       <i class="bx bx-edit-alt me-1"></i> Edit
                     </a>
-                    {{-- <a class="dropdown-item" href="{{ route('admin.package-types.edit', $t->id) }}">
-                      <i class="bx bx-edit-alt me-1"></i> Edit
-                    </a> --}}
 
                     {{-- DELETE --}}
-                    {{-- <form action="{{ route('admin.package-types.destroy', $t->id) }}" method="POST"
-                          onsubmit="return confirm('Yakin hapus {{ $t->package_type }}?');"> --}}
+                    <form action="{{ route('admin.packageType.destroy', $t->id) }}" method="POST"
+                          onsubmit="return confirm('Yakin hapus {{ $t->package_type }}?');">
                     <form action="" method="POST"
                           onsubmit="return confirm('Yakin hapus {{ $t->package_type }}?');">
                       @csrf
