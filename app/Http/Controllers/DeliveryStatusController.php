@@ -3,9 +3,12 @@
 // app/Http/Controllers/DeliveryStatusController.php
 namespace App\Http\Controllers;
 
+use App\Events\DeliveryStatusUpdated;
 use App\Models\OrderDeliveryStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DeliveryStatusController extends Controller
 {
@@ -36,6 +39,9 @@ class DeliveryStatusController extends Controller
             'confirmed_at' => now(),
             'note'         => $request->input('note'),
         ]);
+
+        $this->broadcastDeliveryStatus($deliveryStatus, 'siang', 'sampai', $request->input('note'));
+
         return back()->with('status', 'Status siang diubah ke sampai.');
     }
 
@@ -47,12 +53,14 @@ class DeliveryStatusController extends Controller
             'confirmed_at' => now(),
             'note'         => $request->input('note'),
         ]);
+
+        $this->broadcastDeliveryStatus($deliveryStatus, 'malam', 'sampai', $request->input('note'));
+
         return back()->with('status', 'Status malam diubah ke sampai.');
     }
 
     public function confirmDikirimSiang(OrderDeliveryStatus $deliveryStatus, Request $request)
     {
-        // optional guard: jangan ubah kalau sudah final
         if (in_array($deliveryStatus->status_siang, ['sampai', 'gagal dikirim'])) {
             return back()->with('status', 'Status siang sudah final dan tidak dapat diubah.');
         }
@@ -64,12 +72,13 @@ class DeliveryStatusController extends Controller
             'note'         => $request->input('note'),
         ]);
 
+        $this->broadcastDeliveryStatus($deliveryStatus, 'siang', 'sedang dikirim', $request->input('note'));
+
         return back()->with('status', 'Status siang diubah ke sedang dikirim.');
     }
 
     public function confirmDikirimMalam(OrderDeliveryStatus $deliveryStatus, Request $request)
     {
-        // optional guard: jangan ubah kalau sudah final
         if (in_array($deliveryStatus->status_malam, ['sampai', 'gagal dikirim'])) {
             return back()->with('status', 'Status malam sudah final dan tidak dapat diubah.');
         }
@@ -81,6 +90,50 @@ class DeliveryStatusController extends Controller
             'note'         => $request->input('note'),
         ]);
 
+        $this->broadcastDeliveryStatus($deliveryStatus, 'malam', 'sedang dikirim', $request->input('note'));
+
         return back()->with('status', 'Status malam diubah ke sedang dikirim.');
+    }
+
+    private function broadcastDeliveryStatus($deliveryStatus, string $shift, string $newStatus, ?string $note = null): void
+    {
+        $order = $deliveryStatus->order;
+        if (!$order) {
+            Log::warning('Order not found for delivery status', [
+                'delivery_status_id' => $deliveryStatus->id
+            ]);
+            return;
+        }
+
+        // ✅ DEBUG DETAILED
+        Log::info('🎯 BROADCASTING DELIVERY STATUS', [
+            'delivery_status_id' => $deliveryStatus->id,
+            'order_id' => $order->id,
+            'order_user_id' => $order->user_id,
+            'current_auth_id' => Auth::id(),
+            'shift' => $shift,
+            'status' => $newStatus,
+            'channel' => 'user.' . $order->user_id,
+            'note' => $note
+        ]);
+
+        try {
+            broadcast(new DeliveryStatusUpdated(
+                userId: (int) $order->user_id,
+                deliveryStatusId: (int) $deliveryStatus->id,
+                orderId: (int) $order->id,
+                shift: Str::lower($shift),
+                status: Str::lower($newStatus),
+                date: $deliveryStatus->delivery_date?->toDateString() ?? now('Asia/Jakarta')->toDateString(),
+                note: $note
+            ))->toOthers();
+
+            Log::info('✅ EVENT BROADCASTED SUCCESSFULLY');
+        } catch (\Exception $e) {
+            Log::error('❌ FAILED TO BROADCAST EVENT', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
     }
 }

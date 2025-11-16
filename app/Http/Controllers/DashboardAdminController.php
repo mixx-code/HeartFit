@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
 use App\Models\OrderDeliveryStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardAdminController extends Controller
 {
@@ -39,7 +41,40 @@ class DashboardAdminController extends Controller
             'total' => $total
         ];
 
-        return view('admin.dashboard', compact('items', 'date', 'agg'));
+        // ===== RINGKASAN USER AKTIF/TIDAK AKTIF (berdasarkan order terbaru per user) =====
+        $today = Carbon::parse($date, $tz)->toDateString();
+
+        // Subquery: ambil timestamp terbaru per user (prioritas paid_at, fallback created_at)
+        $latestPerUser = Order::query()
+            ->select('user_id', DB::raw('MAX(COALESCE(paid_at, created_at)) as last_ts'))
+            ->groupBy('user_id');
+        // ->where('status', 'PAID') // <- aktifkan jika mau hanya order berstatus PAID
+
+        // Join ke orders untuk ambil rentang tanggal dari order terbaru
+        $latestOrders = Order::query()
+            ->from('orders as o')
+            ->joinSub($latestPerUser, 'lu', function ($join) {
+                $join->on('o.user_id', '=', 'lu.user_id')
+                    ->on(DB::raw('COALESCE(o.paid_at, o.created_at)'), '=', 'lu.last_ts');
+            })
+            ->select('o.user_id', 'o.start_date', 'o.end_date');
+
+        // Total user unik yg punya order (berdasarkan order terbaru)
+        $uniqueUsers = (clone $latestOrders)
+            ->distinct()
+            ->count('o.user_id');
+
+        // Aktif: today berada dalam [start_date, end_date]
+        $activeUserCount = (clone $latestOrders)
+            ->whereDate('o.start_date', '<=', $today)
+            ->whereDate('o.end_date', '>=', $today)
+            ->distinct()
+            ->count('o.user_id');
+
+        // Tidak aktif: sisanya
+        $inactiveUserCount = max(0, $uniqueUsers - $activeUserCount);
+
+        return view('admin.dashboard', compact('items', 'date', 'agg', 'activeUserCount', 'inactiveUserCount'));
     }
 
     public function updateStatus(Request $request, OrderDeliveryStatus $delivery)

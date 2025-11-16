@@ -3,17 +3,145 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <div class="container-xxl flex-grow-1 container-p-y">
+    <div iv class="container-xxl  container-p-y">
+        <div class="row row-cols-1 row-cols-md-2 g-3 mt-1 align-items-stretch">
+
+            {{-- KPI: User Aktif (2 card di satu kolom) --}}
+            <div class="col d-flex flex-column gap-3">
+                {{-- Customers Aktif --}}
+                <div class="card border-0 shadow-sm h-100 flex-fill">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="text-secondary small">Customers Aktif</div>
+                                <div class="h3 mb-0">{{ number_format($activeUserCount ?? 0) }}</div>
+                            </div>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                style="width:48px;height:48px;background:#e9f7ef;">
+                                <i class="bx bx-user-check" style="font-size:24px;color:#198754;"></i>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 small text-secondary">
+                            Terakhir diperbarui: {{ now()->format('Y-m-d') }}
+                        </div>
+
+                        <div class="mt-3">
+                            {{-- <a href="" class="btn btn-sm btn-outline-success w-100">
+                                Lihat Daftar User
+                            </a> --}}
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Customers Tidak Aktif --}}
+                <div class="card border-0 shadow-sm h-100 flex-fill">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="text-secondary small">Customers Tidak Aktif</div>
+                                <div class="h3 mb-0">{{ number_format($inactiveUserCount ?? 0) }}</div>
+                            </div>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                style="width:48px;height:48px;background:#fdecea;">
+                                <i class="bx bx-user-x" style="font-size:24px;color:#dc3545;"></i>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 small text-secondary">
+                            Terakhir diperbarui: {{ now()->format('Y-m-d') }}
+                        </div>
+
+                        <div class="mt-3">
+                            {{-- <a href="" class="btn btn-sm btn-outline-danger w-100">
+                                Lihat Detail
+                            </a> --}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            {{-- Order Statistics --}}
+            <div class="col d-flex">
+                <div class="card h-100 w-100">
+                    <div class="card-header d-flex align-items-center justify-content-between pb-0">
+                        <div class="card-title mb-0">
+                            <h5 class="m-0 me-2">Order Statistics</h5>
+                            <small class="text-muted">42.82k Total Sales</small>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn p-0" type="button" id="orederStatistics" data-bs-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                                <i class="bx bx-dots-vertical-rounded"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="orederStatistics">
+                                <a class="dropdown-item" href="javascript:void(0);">Select All</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Share</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex flex-column align-items-center gap-1">
+                                <h2 class="mb-2">8,258</h2>
+                                <span>Total Orders</span>
+                            </div>
+                            <div id="orderStatisticsChart"></div>
+                        </div>
+                        <ul class="p-0 m-0">
+                            <li class="d-flex mb-4 pb-1">
+                                <div class="avatar flex-shrink-0 me-3">
+                                    <span class="avatar-initial rounded bg-label-primary">
+                                        <i class="bx bx-mobile-alt"></i>
+                                    </span>
+                                </div>
+                                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                                    <div class="me-2">
+                                        <h6 class="mb-0">Premium</h6>
+                                        <small class="text-muted">paket 1, paket 2, paket 3</small>
+                                    </div>
+                                    <div class="user-progress">
+                                        <small class="fw-semibold">82.5k</small>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="d-flex mb-4 pb-1">
+                                <div class="avatar flex-shrink-0 me-3">
+                                    <span class="avatar-initial rounded bg-label-success">
+                                        <i class="bx bx-closet"></i>
+                                    </span>
+                                </div>
+                                <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                                    <div class="me-2">
+                                        <h6 class="mb-0">Reguler</h6>
+                                        <small class="text-muted">paket 1, paket 2, paket 3</small>
+                                    </div>
+                                    <div class="user-progress">
+                                        <small class="fw-semibold">23.8k</small>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
 
         {{-- =========================================
-       FILTER TANGGAL (Bootstrap only)
-     ========================================= --}}
+        FILTER TANGGAL (Bootstrap only)
+        ========================================= --}}
         <div class="mb-3 border-bottom">
             <form method="GET" class="py-2">
                 <div class="row g-2 align-items-end">
                     <div class="col-auto">
                         <label for="date" class="form-label mb-0">Tanggal</label>
-                        <input type="date" id="date" name="date" class="form-control" value="{{ $date }}">
+                        <input type="date" id="date" name="date" class="form-control"
+                            value="{{ $date }}">
                     </div>
                     <div class="col-auto">
                         <button class="btn btn-primary">Tampilkan</button>
@@ -74,89 +202,16 @@
                     $color .
                     '" style="width:' .
                     $progress .
-                    '%"></div>
+                    '%">
+        </div>
       </div>
     ';
             };
         @endphp
 
         {{-- =========================================
-       ROW 1: KPI MINI (tambah sesuka hati)
-     ========================================= --}}
-        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-3">
-            {{-- <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Pesanan Hari Ini</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="display-6 fw-bold">{{ $kpi['orders_today'] ?? 0 }}</div>
-                        <div class="small text-secondary mt-1">Termasuk reguler & premium</div>
-                        @if (isset($kpi['orders_progress']))
-                            <div class="mt-3">
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span>Target harian</span><span>{{ (int) $kpi['orders_progress'] }}%</span>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar" style="width: {{ (int) $kpi['orders_progress'] }}%"></div>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div> --}}
-            {{-- <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Pengantaran Selesai</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="display-6 fw-bold">{{ $kpi['delivered'] ?? 0 }}</div>
-                        <div class="small text-secondary mt-1">Siang + Malam</div>
-                        @if (isset($kpi['delivered_pct']))
-                            <div class="mt-3">
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span>Progres</span><span>{{ (int) $kpi['delivered_pct'] }}%</span>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar" style="width: {{ (int) $kpi['delivered_pct'] }}%"></div>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div> --}}
-            {{-- <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Sedang Dikirim</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="display-6 fw-bold">{{ $kpi['shipping'] ?? 0 }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Gagal Dikirim</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="display-6 fw-bold">{{ $kpi['failed'] ?? 0 }}</div>
-                        <div class="small text-secondary mt-1">Butuh follow-up</div>
-                    </div>
-                </div>
-            </div> --}}
-        </div>
-
-        {{-- =========================================
-       ROW 2: TABEL + LIST (contoh)
-     ========================================= --}}
-        
-
-        {{-- =========================================
-       ROW 3: LIST PENGANTARAN (card per item)
-     ========================================= --}}
+        ROW 3: LIST PENGANTARAN (card per item)
+        ========================================= --}}
         <div class="row g-3">
             @forelse ($items as $row)
                 @php
@@ -377,6 +432,7 @@
                 </div>
             </div>
         </div>
+
 
     </div>
 @endsection

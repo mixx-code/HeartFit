@@ -427,9 +427,9 @@
         width: 130,
         type: 'donut'
       },
-      labels: ['Electronic', 'Sports', 'Decor', 'Fashion'],
-      series: [85, 15, 50, 50],
-      colors: [config.colors.primary, config.colors.secondary, config.colors.info, config.colors.success],
+      labels: ['Premium', 'Reguler'],
+      series: [85, 15],
+      colors: [config.colors.primary, config.colors.secondary],
       stroke: {
         width: 5,
         colors: cardColor

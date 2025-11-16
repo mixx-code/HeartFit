@@ -274,6 +274,8 @@
             window.snap.pay(@json($snapToken), {
                 onSuccess: async (result) => {
                     // Berhasil
+                    console.log("isi result >", result);
+                    
                     await postSnapResult({
                         hook: 'success',
                         result
@@ -284,6 +286,7 @@
 
                 onPending: async (result) => {
                     // Pending (bisa jadi nantinya expire). Kita tetap sync dulu.
+                    console.log("isi result >", result);
                     await postSnapResult({
                         hook: 'pending',
                         result
@@ -291,6 +294,7 @@
 
                     // Cek cepat dari payload Snap
                     if (isExpireFromSnap(result)) {
+                        console.log("isi result >", result);
                         return handleExpired();
                     }
 
@@ -305,6 +309,7 @@
 
                 onError: async (result) => {
                     // Error dari Snap (termasuk kemungkinan expired)
+                    console.log("isi result >", result);
                     await postSnapResult({
                         hook: 'error',
                         result

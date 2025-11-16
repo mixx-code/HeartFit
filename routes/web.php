@@ -188,7 +188,8 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
 
         Route::get('/customer/orders', [OrderController::class, 'index'])->name('customer.orders.index');
 
-        Route::post('/customer/orders',               [OrderController::class, 'store'])->name('orders.store')->middleware('block.order.window.db');
+        Route::post('/customer/orders',               [OrderController::class, 'store'])->name('orders.store')
+        ->middleware('block.order.window.db');
         Route::get('/customer/orders/{order}/pay',    [OrderController::class, 'pay'])->name('orders.pay');
         Route::get('/customer/orders/{order}/finish', [OrderController::class, 'finish'])->name('orders.finish');
         Route::post('/customer/orders/{order}/confirm', [OrderController::class, 'confirm'])->name('orders.confirm');
@@ -196,7 +197,8 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::post('/customer/orders/{order}/snap-result', [OrderController::class, 'snapResult'])
             ->name('orders.snap_result');
             // Public steps
-        Route::get('/customer/orders/create',   [OrderController::class, 'create'])->name('orders.create')->middleware('block.order.window.db');
+        Route::get('/customer/orders/create',   [OrderController::class, 'create'])->name('orders.create')
+        ->middleware('block.order.window.db');
         Route::post('/customer/orders/preview', [OrderController::class, 'preview'])->name('orders.preview');
             
             // Webhook (jangan lupa exclude CSRF di VerifyCsrfToken)
@@ -211,4 +213,5 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         })->middleware('web');
     });
 });
+
 

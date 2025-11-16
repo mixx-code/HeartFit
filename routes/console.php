@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('heartfit:generate-delivery-statuses')
-    ->dailyAt('00:37')
+    ->dailyAt('00:03')
     ->timezone('Asia/Jakarta')
     ->withoutOverlapping();
 
