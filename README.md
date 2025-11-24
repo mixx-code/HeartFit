@@ -9,7 +9,7 @@
 
 # Setup Proyek (Laragon + Laravel 12)
 
-Panduan singkat menjalankan proyek Laravel 12 yang di-clone dari GitHub menggunakan **Laragon** di Windows. Ikuti langkah **A s.d. D** berurutan.
+Panduan singkat menjalankan proyek Laravel 12 yang di-clone dari GitHub menggunakan **Laragon** di Windows. Ikuti langkah **A s.d. E** berurutan.
 
 ---
 
@@ -98,6 +98,47 @@ Di terminal terpisah:
     npm run dev
     # atau build produksi:
     # npm run build
+
+---
+
+## E. Menjalankan Scheduler (Background Task)
+
+Aplikasi ini menggunakan **Laravel Scheduler** untuk menjalankan task otomatis. Task berikut sudah dikonfigurasi:
+
+```php
+// routes/console.php
+Schedule::command('heartfit:generate-delivery-statuses')
+    ->dailyAt('22:15')
+    ->timezone('Asia/Jakarta')
+    ->withoutOverlapping();
+```
+
+### Untuk Development (Testing Scheduler):
+
+    php artisan schedule:work
+
+Perintah ini akan menjalankan scheduler setiap menit (untuk testing di local).
+
+### Untuk Production:
+
+Setup **Cron Job** di server:
+
+    * * * * * cd /path-to-your-project && php artisan schedule:run >> /dev/null 2>&1
+
+### Mengubah Waktu Eksekusi:
+
+Edit file `routes/console.php`:
+
+```php
+// Ubah waktu sesuai kebutuhan
+->dailyAt('22:15') // Format 24 jam: 'HH:MM'
+```
+
+Contoh perubahan waktu:
+- `->dailyAt('09:00')` // Jalankan jam 09:00 pagi
+- `->dailyAt('14:30')` // Jalankan jam 14:30 siang
+- `->hourly()` // Jalankan setiap jam
+- `->everyMinute()` // Jalankan setiap menit (testing)
 
 ---
 
