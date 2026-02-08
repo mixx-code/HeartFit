@@ -6,9 +6,11 @@ use App\Models\UserDetail;
 use App\Http\Requests\StoreUserDetailRequest;
 use App\Http\Requests\UpdateUserDetailRequest;
 use App\Models\User;
+use App\Services\MRGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class UserDetailController extends Controller
@@ -50,7 +52,6 @@ class UserDetailController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'mr'               => ['required', 'string', 'max:50', 'unique:user_details,mr'],
             'nik'              => ['required', 'string', 'max:32', 'unique:user_details,nik'],
             'alamat'           => ['required', 'string'],
             'jenis_kelamin'    => ['required', 'in:L,P'],
@@ -63,24 +64,29 @@ class UserDetailController extends Controller
             'usia'             => ['nullable', 'integer', 'min:0', 'max:150'],
 
             // akun login
-            'name'  => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'unique:users,email'],
+            'name'             => ['required', 'string', 'max:255'],
+            'email'            => ['required', 'email', 'unique:users,email'],
+            'password'         => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
-        DB::transaction(function () use ($data, $request) {
+        $generatedMr = null;
+        DB::transaction(function () use ($data, $request, &$generatedMr) {
             // 1) buat akun
             $user = User::create([
                 'name'       => $data['name'],
                 'email'      => $data['email'],
                 'role'       => 'customer',
-                'password'   => bcrypt('password123!'),
+                'password'   => Hash::make($data['password']),
                 'created_by' => Auth::id(),
             ]);
 
             // 2) siapkan data detail
-            $detailData = collect($data)->except(['name', 'email', 'foto_ktp', 'foto_ktp_base64'])->toArray();
+            $detailData = collect($data)->except(['name', 'email', 'password', 'password_confirmation', 'foto_ktp', 'foto_ktp_base64'])->toArray();
             $detailData['user_id']    = $user->id;
+            $detailData['mr']         = MRGeneratorService::generateUnique(); // Auto-generate MR
             $detailData['created_by'] = Auth::id();
+            
+            $generatedMr = $detailData['mr'];
 
             // 3) isi foto_ktp_base64 dari file atau dari field base64
             $fotoBase64 = null;
@@ -105,7 +111,7 @@ class UserDetailController extends Controller
 
         return redirect()
             ->route('admin.data.customers')
-            ->with('status', 'Detail + akun user berhasil dibuat.');
+            ->with('status', "Detail + akun user berhasil dibuat dengan MR: {$generatedMr}");
     }
 
 

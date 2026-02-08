@@ -44,9 +44,11 @@
                     </form>
 
                     {{-- Tombol Tambah Data --}}
-                    <a class="btn btn-success" href="{{ route('admin.data.customers.create') }}">
-                        <i class="bi bi-plus-circle"></i> Tambah Data
-                    </a>
+                    @if(auth()->user()->role !== 'ahli_gizi')
+                      <a class="btn btn-success" href="{{ route('admin.data.customers.create') }}">
+                          <i class="bi bi-plus-circle"></i> Tambah Data
+                      </a>
+                    @endif
                 </div>
             </div>
 
@@ -82,22 +84,32 @@
                     <i class="bx bx-dots-vertical-rounded"></i>
                   </button>
                   <div class="dropdown-menu">
-                    <a class="dropdown-item" href="{{ route('admin.data.customer.detail', $c->detail->id) }}"><i class="bx bx-detail me-1"></i> Detail</a>
-                    <a class="dropdown-item" href="#"><i class="bx bx-edit-alt me-1"></i> Edit</a>
+                    @if($c->detail)
+                      <a class="dropdown-item" href="{{ route('admin.data.customer.detail', $c->detail->id) }}"><i class="bx bx-detail me-1"></i> Detail</a>
+                    @else
+                      <a class="dropdown-item" href="#" onclick="alert('Customer belum memiliki detail data')"><i class="bx bx-detail me-1"></i> Detail</a>
+                    @endif
+                    
+                    {{-- Edit & Delete hanya untuk admin, superadmin, medical_record --}}
+                    @if(auth()->user()->role !== 'ahli_gizi')
+                      <a class="dropdown-item" href="#"><i class="bx bx-edit-alt me-1"></i> Edit</a>
+                    @endif
 
                     {{-- DELETE --}}
-                    <form action="{{ route('admin.data.customer.delete', $c['id']) }}" method="POST"
-                          onsubmit="return confirm('Yakin hapus {{ $c['nama'] }}?');">
-                      @csrf
-                      @method('DELETE')
-                      {{-- pertahankan query agar kembali ke kondisi saat ini --}}
-                      <input type="hidden" name="q" value="{{ request('q') }}">
-                      <input type="hidden" name="per_page" value="{{ request('per_page', $perPage) }}">
-                      <input type="hidden" name="page" value="{{ request('page') }}">
-                      <button type="submit" class="dropdown-item text-danger">
-                        <i class="bx bx-trash me-1"></i> Delete
-                      </button>
-                    </form>
+                    @if(auth()->user()->role !== 'ahli_gizi')
+                      <form action="{{ route('admin.data.customer.delete', $c['id']) }}" method="POST"
+                            onsubmit="return confirm('Yakin hapus {{ $c['name'] }}?');">
+                        @csrf
+                        @method('DELETE')
+                        {{-- pertahankan query agar kembali ke kondisi saat ini --}}
+                        <input type="hidden" name="q" value="{{ request('q') }}">
+                        <input type="hidden" name="per_page" value="{{ request('per_page', $perPage) }}">
+                        <input type="hidden" name="page" value="{{ request('page') }}">
+                        <button type="submit" class="dropdown-item text-danger">
+                          <i class="bx bx-trash me-1"></i> Delete
+                        </button>
+                      </form>
+                    @endif
                   </div>
                 </div>
               </td>

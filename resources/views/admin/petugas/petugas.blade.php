@@ -81,8 +81,8 @@
                   </button>
                   <div class="dropdown-menu">
                     {{-- <a class="dropdown-item" href=""><i class="bx bx-detail me-1"></i> Detail</a> --}}
-                    <a class="dropdown-item" href="{{ route('admin.data.petugas.detail', $p->detail->id) }}"><i class="bx bx-detail me-1"></i> Detail</a>
-                    <a class="dropdown-item" href="#"><i class="bx bx-edit-alt me-1"></i> Edit</a>
+                    <a class="dropdown-item" href="{{ route('admin.data.petugas.detail', $p->id) }}"><i class="bx bx-detail me-1"></i> Detail</a>
+                    <a class="dropdown-item" href="{{ route('admin.data.petugas.edit', $p->id) }}"><i class="bx bx-edit-alt me-1"></i> Edit</a>
 
                     {{-- DELETE --}}
                     <form action="{{ route('admin.data.petugas.delete', $p['id']) }}" method="POST"

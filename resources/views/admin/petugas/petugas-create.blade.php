@@ -27,64 +27,6 @@
             </div>
           </div>
 
-          {{-- NIK --}}
-          <div class="mb-3">
-            <label class="form-label" for="nik">NIK</label>
-            <div class="input-group input-group-merge">
-              <span id="icon-nik" class="input-group-text"><i class="bx bx-id-card"></i></span>
-              <input type="text" id="nik" name="nik"
-                     class="form-control @error('nik') is-invalid @enderror"
-                     placeholder="Nomor Induk Kependudukan" aria-describedby="icon-nik"
-                     value="{{ old('nik') }}" required>
-              @error('nik')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-          </div>
-
-          {{-- Alamat --}}
-          <div class="mb-3">
-            <label class="form-label" for="alamat">Alamat</label>
-            <div class="input-group input-group-merge">
-              <span id="icon-alamat" class="input-group-text"><i class="bx bx-home"></i></span>
-              <textarea id="alamat" name="alamat"
-                        class="form-control @error('alamat') is-invalid @enderror"
-                        placeholder="Alamat lengkap"
-                        aria-describedby="icon-alamat" required>{{ old('alamat') }}</textarea>
-              @error('alamat')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-          </div>
-
-          {{-- Jenis Kelamin --}}
-          <div class="mb-3">
-            <label class="form-label" for="jenis_kelamin">Jenis Kelamin</label>
-            <div class="input-group input-group-merge">
-              <span id="icon-jk" class="input-group-text"><i class="bx bx-male-female"></i></span>
-              <select id="jenis_kelamin" name="jenis_kelamin"
-                      class="form-select @error('jenis_kelamin') is-invalid @enderror"
-                      aria-describedby="icon-jk" required>
-                <option value="">-- Pilih --</option>
-                <option value="L" {{ old('jenis_kelamin')==='L'?'selected':'' }}>Laki-laki</option>
-                <option value="P" {{ old('jenis_kelamin')==='P'?'selected':'' }}>Perempuan</option>
-              </select>
-              @error('jenis_kelamin')<div class="invalid-feedback">{{ $message }}</div>@enderror
-            </div>
-          </div>
-
-          {{-- Tempat & Tanggal Lahir --}}
-          <div class="mb-3">
-            <label class="form-label">Tempat & Tanggal Lahir</label>
-            <div class="input-group">
-              <span id="icon-ttl" class="input-group-text"><i class="bx bx-calendar"></i></span>
-              <input type="text" id="tempat_lahir" name="tempat_lahir"
-                     class="form-control @error('tempat_lahir') is-invalid @enderror"
-                     placeholder="Tempat lahir" value="{{ old('tempat_lahir') }}" required>
-              <input type="date" id="tanggal_lahir" name="tanggal_lahir"
-                     class="form-control @error('tanggal_lahir') is-invalid @enderror"
-                     value="{{ old('tanggal_lahir') }}" required>
-            </div>
-            @error('tempat_lahir')<div class="text-danger small">{{ $message }}</div>@enderror
-            @error('tanggal_lahir')<div class="text-danger small">{{ $message }}</div>@enderror
-          </div>
-
           {{-- Email --}}
           <div class="mb-3">
             <label class="form-label" for="email">Email</label>
@@ -96,7 +38,32 @@
                      value="{{ old('email') }}" required>
               @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div class="form-text">Password default bisa di-set di controller (misal: <code>password123!</code>).</div>
+          </div>
+
+          {{-- Password --}}
+          <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <div class="input-group input-group-merge">
+              <span class="input-group-text"><i class="bx bx-lock"></i></span>
+              <input type="password" id="password" name="password"
+                     class="form-control @error('password') is-invalid @enderror"
+                     placeholder="Minimal 6 karakter" aria-describedby="icon-password"
+                     required>
+              @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+          </div>
+
+          {{-- Konfirmasi Password --}}
+          <div class="mb-3">
+            <label class="form-label" for="password_confirmation">Konfirmasi Password</label>
+            <div class="input-group input-group-merge">
+              <span class="input-group-text"><i class="bx bx-lock"></i></span>
+              <input type="password" id="password_confirmation" name="password_confirmation"
+                     class="form-control @error('password_confirmation') is-invalid @enderror"
+                     placeholder="Ulangi password" aria-describedby="icon-password_confirmation"
+                     required>
+              @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
           </div>
 
           {{-- Nomor HP --}}
@@ -121,10 +88,19 @@
                       class="form-select @error('role') is-invalid @enderror"
                       aria-describedby="icon-role" required>
                 <option value="">-- Pilih Role --</option>
-                <option value="admin"           {{ old('role')==='admin'?'selected':'' }}>Admin</option>
-                <option value="ahli_gizi"       {{ old('role')==='ahli_gizi'?'selected':'' }}>Ahli Gizi</option>
-                <option value="medical_record"  {{ old('role')==='medical_record'?'selected':'' }}>Medical Record</option>
-                <option value="bendahara"       {{ old('role')==='bendahara'?'selected':'' }}>Bendahara</option>
+                
+                {{-- Superadmin bisa membuat semua role kecuali superadmin --}}
+                @if(auth()->user()->role === 'superadmin')
+                  <option value="admin" {{ old('role')==='admin'?'selected':'' }}>Admin</option>
+                  <option value="ahli_gizi" {{ old('role')==='ahli_gizi'?'selected':'' }}>Ahli Gizi</option>
+                  <option value="medical_record" {{ old('role')==='medical_record'?'selected':'' }}>Medical Record</option>
+                  <option value="bendahara" {{ old('role')==='bendahara'?'selected':'' }}>Bendahara</option>
+                @else
+                  {{-- Admin hanya bisa membuat role tertentu --}}
+                  <option value="ahli_gizi" {{ old('role')==='ahli_gizi'?'selected':'' }}>Ahli Gizi</option>
+                  <option value="medical_record" {{ old('role')==='medical_record'?'selected':'' }}>Medical Record</option>
+                  <option value="bendahara" {{ old('role')==='bendahara'?'selected':'' }}>Bendahara</option>
+                @endif
               </select>
               @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>

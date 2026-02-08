@@ -31,4 +31,13 @@ class UserFactory extends Factory
             'password' => Hash::make('admin123'),
         ]);
     }
+
+    public function superAdmin(): static
+    {
+        return $this->state(fn() => [
+            'role' => 'superadmin',
+            'email' => 'superadmin@example.com',
+            'password' => Hash::make('superadmin123'),
+        ]);
+    }
 }

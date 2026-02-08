@@ -6,57 +6,71 @@
         <div class="col-xl">
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Edit Data Petugas/Admin</h5>
-                    <small class="text-muted float-end">Perbarui data berikut</small>
+                    <h5 class="mb-0">Detail Petugas/Admin</h5>
+                    <small class="text-muted float-end">Informasi akun petugas</small>
                 </div>
 
-                {{-- ================== FOTO PROFIL (ATAS) ================== --}}
                 <div class="card-body">
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="https://placehold.co/400" alt="Foto Profil" class="rounded-circle border object-fit-cover"
-                            width="120" height="120" />
-                        <div>
-                            <h6 class="mb-1">Foto Profil</h6>
-                            <p class="text-muted mb-2">Placeholder foto profil. (Jika nanti ada field foto profil, bisa
-                                ditambahkan upload di sini.)</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Informasi Akun</h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Nama Lengkap</label>
+                                <p class="form-control-plaintext">{{ $user->name }}</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <p class="form-control-plaintext">{{ $user->email }}</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Role</label>
+                                <p class="form-control-plaintext">
+                                    <span class="badge bg-label-primary">{{ ucfirst($user->role) }}</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Informasi Sistem</h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">ID User</label>
+                                <p class="form-control-plaintext">{{ $user->id }}</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Dibuat Oleh</label>
+                                <p class="form-control-plaintext">{{ $user->created_by ?? 'System' }}</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tanggal Dibuat</label>
+                                <p class="form-control-plaintext">{{ $user->created_at->format('d M Y H:i') }}</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Terakhir Diupdate</label>
+                                <p class="form-control-plaintext">{{ $user->updated_at->format('d M Y H:i') }}</p>
+                            </div>
                         </div>
                     </div>
+
+                    <div class="text-end mt-4">
+                        <a href="{{ route('admin.data.petugas') }}" class="btn btn-secondary me-2">
+                            <i class="bx bx-arrow-back"></i> Kembali
+                        </a>
+                        <a href="#" class="btn btn-warning">
+                            <i class="bx bx-edit"></i> Edit
+                        </a>
+                    </div>
                 </div>
-
-                <hr class="my-0" />
-
-                {{-- ================== FORM ================== --}}
-                <div class="card-body">
-                    @php
-                        // tgl untuk input date
-                        $tgl = old(
-                            'tanggal_lahir',
-                            $detail->tanggal_lahir
-                                ? ($detail->tanggal_lahir instanceof \Carbon\Carbon
-                                    ? $detail->tanggal_lahir->toDateString()
-                                    : \Illuminate\Support\Carbon::parse($detail->tanggal_lahir)->toDateString())
-                                : null,
-                        );
-
-                        // pecah BB/TB dari bb_tb
-                        $bb = $tb = '';
-                        if (!empty($detail->bb_tb)) {
-                            [$bb, $tb] = array_pad(explode('/', $detail->bb_tb, 2), 2, '');
-                            $bb = trim((string) $bb);
-                            $tb = trim((string) $tb);
-                        }
-
-                        // gunakan old() agar tetap muncul setelah validation error
-                        $bbVal = old('berat_badan', $bb);
-                        $tbVal = old('tinggi_badan', $tb);
-
-                        // usia: pakai DB kalau ada; kalau kosong dan ada tanggal_lahir, hitung otomatis
-                        $usiaCalc = null;
-                        if (empty($detail->usia) && !empty($detail->tanggal_lahir)) {
-                            $usiaCalc = \Illuminate\Support\Carbon::parse($detail->tanggal_lahir)->age;
-                        }
-                        $usiaVal = old('usia', $detail->usia ?? $usiaCalc);
-                    @endphp
+            </div>
+        </div>
+    </div>
+@endsection
 
 
                     <form id="formPetugasEdit" method="POST"

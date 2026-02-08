@@ -11,16 +11,19 @@ use App\Http\Controllers\DashboardCustomerController;
 use App\Http\Controllers\MealPackagesController;
 use App\Http\Controllers\MenuMakananController;
 use App\Http\Controllers\PackageTypeController;
+use App\Http\Controllers\AhliGiziController;
 use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserDetailController;
+use App\Http\Controllers\RegisterController;
 
 Route::get('/', [LandingPageController::class, 'index'])->name('welcome');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login',  [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.post');
-    Route::view('/registrasi', 'auth.register')->name('registrasi');
+    Route::get('/registrasi', [RegisterController::class, 'showRegistrationForm'])->name('registrasi');
+    Route::post('/registrasi', [RegisterController::class, 'register'])->name('registrasi.post');
 });
 
 Route::middleware(['auth', 'session.timeout'])->group(function () {
@@ -88,16 +91,24 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     // =======================
-    // ADMIN DASHBOARD — akses: admin | ahli_gizi | bendahara | medical_record
+    // ADMIN DASHBOARD — akses: admin | superadmin | ahli_gizi | bendahara | medical_record
     // =======================
-    Route::middleware('role:admin,ahli_gizi,bendahara,medical_record')->group(function () {
+    Route::middleware('role:admin,superadmin,ahli_gizi,bendahara,medical_record')->group(function () {
         Route::get('/dashboard/admin', [DashboardAdminController::class, 'index'])->name('dashboard.admin');
     });
 
     // =======================
-    // ADMIN ONLY
+    // AHLI GIZI DASHBOARD — akses: ahli_gizi
     // =======================
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('role:ahli_gizi')->group(function () {
+        Route::get('/dashboard/ahli-gizi', [AhliGiziController::class, 'index'])->name('ahli_gizi.orders');
+        Route::get('/ahli-gizi/wa/{userId}', [AhliGiziController::class, 'redirectToWa'])->name('ahli_gizi.wa');
+    });
+
+    // =======================
+    // ADMIN ONLY - akses: admin | superadmin
+    // =======================
+    Route::middleware('role:admin,superadmin')->group(function () {
 
 
         Route::patch('/admin/deliveries/{delivery}/update-status', [DashboardAdminController::class, 'updateStatus'])
@@ -110,9 +121,16 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::get('/admin/data/petugas', [PetugasController::class, 'index'])->name('admin.data.petugas');
         Route::get('/admin/data/petugas/create', [PetugasController::class, 'create'])->name('admin.data.petugas.create');
         Route::post('/admin/data/petugas/create', [PetugasController::class, 'store'])->name('admin.data.petugas.store');
-        Route::get('/admin/data/petugas/detail/{user_detail}', [PetugasController::class, 'show'])->name('admin.data.petugas.detail');
-        Route::put('/admin/data/petugas/detail/{user_detail}', [PetugasController::class, 'update'])->name('admin.data.petugas.update');
+        Route::get('/admin/data/petugas/detail/{user}', [PetugasController::class, 'show'])->name('admin.data.petugas.detail');
+        Route::get('/admin/data/petugas/edit/{user}', [PetugasController::class, 'edit'])->name('admin.data.petugas.edit');
+        Route::put('/admin/data/petugas/detail/{user}', [PetugasController::class, 'update'])->name('admin.data.petugas.update');
         Route::delete('/admin/data/petugas/{user}', [PetugasController::class, 'destroy'])->name('admin.data.petugas.delete');
+
+        // Superadmin only - create admin role
+        Route::middleware('role:superadmin')->group(function () {
+            Route::get('/admin/create-admin', [PetugasController::class, 'createAdmin'])->name('admin.create.admin');
+            Route::post('/admin/create-admin', [PetugasController::class, 'storeAdmin'])->name('admin.store.admin');
+        });
 
         // Package Type
         Route::get('/admin/packageType', [PackageTypeController::class, 'index'])->name('admin.packageType');
@@ -136,14 +154,20 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     });
 
     // =======================
-    // CUSTOMERS MANAGEMENT — akses: admin + medical_record
+    // CUSTOMERS MANAGEMENT — akses: admin + superadmin + ahli_gizi + medical_record
     // (SATU DEFINISI ROUTE SAJA)
     // =======================
-    Route::middleware('role:admin,medical_record')->group(function () {
+    Route::middleware('role:admin,superadmin,ahli_gizi,medical_record')->group(function () {
         Route::get('/admin/data/customers', [CustomerController::class, 'index'])->name('admin.data.customers');
         Route::get('/admin/data/customers/create', [CustomerController::class, 'create'])->name('admin.data.customers.create');
         Route::post('/admin/data/customers/create', [UserDetailController::class, 'store'])->name('admin.data.customers.create');
         Route::get('/admin/data/customer/detail/{user_detail}', [UserDetailController::class, 'show'])->name('admin.data.customer.detail');
+    });
+
+    // =======================
+    // CUSTOMERS MANAGEMENT EDIT/DELETE — akses: admin + superadmin + medical_record ONLY
+    // =======================
+    Route::middleware('role:admin,superadmin,medical_record')->group(function () {
         Route::put('/admin/data/customer/detail/{user_detail}', [UserDetailController::class, 'update'])->name('admin.user-details.update');
         Route::delete('/admin/data/customer/{user}', [UserController::class, 'destroy'])->name('admin.data.customer.delete');
     });
@@ -152,7 +176,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     // ORDERS LIST — akses: admin + bendahara
     // (SATU DEFINISI ROUTE SAJA)
     // =======================
-    Route::middleware('role:admin,bendahara')->group(function () {
+    Route::middleware('role:admin,superadmin,bendahara')->group(function () {
         // Tetap satu nama: admin.orders.index (biar menu kamu konsisten)
         Route::get('/admin/orders', [OrderController::class, 'viewOrderByAdmin'])->name('admin.orders.index');
         // Kalau kamu mau URL khusus bendahara (mis. /bendahara/orders), beri NAMA BERBEDA
@@ -163,7 +187,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     // MENU MAKANAN — akses: admin + ahli_gizi
     // (SATU DEFINISI ROUTE SAJA)
     // =======================
-    Route::middleware('role:admin,ahli_gizi')->group(function () {
+    Route::middleware('role:admin,superadmin,ahli_gizi')->group(function () {
         // Nama route tetap "admin.menuMakanan*" supaya sidebar kamu gak perlu diubah
         Route::get('/admin/menuMakanan', [MenuMakananController::class, 'index'])->name('admin.menuMakanan');
         Route::get('/admin/menuMakanan/addMenuMakanan', [MenuMakananController::class, 'create'])->name('admin.menuMakanan.addMenuMakanan');

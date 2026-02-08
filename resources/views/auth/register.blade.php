@@ -139,28 +139,33 @@
               <h4 class="mb-2">Welcome to Sneat! 👋</h4>
               <p class="mb-4">Please sign-in to your account and start the adventure</p>
 
-              <form id="formAuthentication" class="mb-3" method="GET" action="{{ url('/dashboard') }}">
+              <form id="formAuthentication" class="mb-3" method="POST" action="{{ route('registrasi.post') }}">
+                @csrf
                 <div class="mb-3">
                   <label for="email" class="form-label">Username</label>
                   <input
                     type="text"
-                    class="form-control"
+                    class="form-control @error('username') is-invalid @enderror"
                     id="username"
                     name="username"
                     placeholder="Enter your username"
+                    value="{{ old('username') }}"
                     autofocus
                   />
+                  @error('username')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="mb-3">
                   <label for="email" class="form-label">Email </label>
                   <input
-                    type="text"
-                    class="form-control"
+                    type="email"
+                    class="form-control @error('email') is-invalid @enderror"
                     id="email"
                     name="email"
                     placeholder="Enter your email"
+                    value="{{ old('email') }}"
                     autofocus
                   />
+                  @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="mb-3 form-password-toggle">
                   <div class="d-flex justify-content-between">
@@ -173,13 +178,29 @@
                     <input
                       type="password"
                       id="password"
-                      class="form-control"
+                      class="form-control @error('password') is-invalid @enderror"
                       name="password"
-                      placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                      placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
                       aria-describedby="password"
                     />
                     <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
                   </div>
+                  @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+                <div class="mb-3 form-password-toggle">
+                  <label class="form-label" for="password_confirmation">Konfirmasi Password</label>
+                  <div class="input-group input-group-merge">
+                    <input
+                      type="password"
+                      id="password_confirmation"
+                      class="form-control @error('password_confirmation') is-invalid @enderror"
+                      name="password_confirmation"
+                      placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
+                      aria-describedby="password_confirmation"
+                    />
+                    <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
+                  </div>
+                  @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
                 <div class="mb-3">
                   <div class="form-check">

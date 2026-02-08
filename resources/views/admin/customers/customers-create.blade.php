@@ -34,18 +34,27 @@
                      placeholder="nama@email.com" value="{{ old('email') }}" required>
               @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
-            <div class="form-text">Password default: <code>password123!</code> (bisa diubah nanti).</div>
           </div>
 
-          {{-- === Data Detail === --}}
           <div class="mb-3">
-            <label class="form-label" for="mr">Medical Record (MR)</label>
+            <label class="form-label" for="password">Password</label>
             <div class="input-group input-group-merge">
-              <span class="input-group-text"><i class="bx bx-id-card"></i></span>
-              <input type="text" id="mr" name="mr"
-                     class="form-control @error('mr') is-invalid @enderror"
-                     placeholder="Misal: MR-000001" value="{{ old('mr') }}" required>
-              @error('mr')<div class="invalid-feedback">{{ $message }}</div>@enderror
+              <span class="input-group-text"><i class="bx bx-lock"></i></span>
+              <input type="password" id="password" name="password"
+                     class="form-control @error('password') is-invalid @enderror"
+                     placeholder="Minimal 6 karakter" required>
+              @error('password')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="password_confirmation">Konfirmasi Password</label>
+            <div class="input-group input-group-merge">
+              <span class="input-group-text"><i class="bx bx-lock"></i></span>
+              <input type="password" id="password_confirmation" name="password_confirmation"
+                     class="form-control @error('password_confirmation') is-invalid @enderror"
+                     placeholder="Ulangi password" required>
+              @error('password_confirmation')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
           </div>
 

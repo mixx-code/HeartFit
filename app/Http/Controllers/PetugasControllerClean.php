@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class PetugasController extends Controller
 {
@@ -88,63 +87,27 @@ class PetugasController extends Controller
     /** UPDATE DATA */
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name'  => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'role'  => 'required|string|in:admin,ahli_gizi,medical_record,bendahara',
         ]);
 
-        try {
-            $user->update([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'role' => $validated['role'],
-                'updated_by' => Auth::id(),
-            ]);
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+            'updated_by' => Auth::id(),
+        ]);
 
-            return redirect()
-                ->route('admin.data.petugas')
-                ->with('success', 'Data petugas berhasil diperbarui!');
-        } catch (\Exception $e) {
-            return back()
-                ->with('error', 'Gagal memperbarui data: ' . $e->getMessage())
-                ->withInput();
-        }
+        return redirect()
+            ->route('admin.data.petugas')
+            ->with('success', 'Data petugas berhasil diperbarui!');
     }
 
     public function destroy(User $user)
     {
         $user->delete();
         return back()->with('success', 'Petugas berhasil dihapus.');
-    }
-
-    /** CREATE ADMIN - Superadmin only */
-    public function createAdmin()
-    {
-        return view('admin.petugas.create-admin');
-    }
-
-    /** STORE ADMIN - Superadmin only */
-    public function storeAdmin(Request $request)
-    {
-        $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'email'         => 'required|string|email|max:255|unique:users,email',
-            'password'       => 'required|string|min:6|confirmed',
-            'hp'            => 'nullable|string|max:25',
-        ]);
-
-        // Buat akun admin dengan role 'admin'
-        $user = User::create([
-            'name'       => $validated['name'],
-            'role'       => 'admin', // Force role to admin
-            'email'      => $validated['email'],
-            'password'   => Hash::make($validated['password']),
-            'created_by' => Auth::id(),
-        ]);
-
-        return redirect()
-            ->route('admin.data.petugas')
-            ->with('success', 'Akun admin berhasil dibuat!');
     }
 }
