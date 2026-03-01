@@ -47,6 +47,7 @@
         @include('partials.navbar')
         <div class="content-wrapper">
           @yield('content')
+          @include('partials.footer')
         </div>
       </div>
     </div>

@@ -66,6 +66,29 @@
             font-size: 14px;
         }
 
+        /* Paket PERSONAL -> UNGU */
+        .btn-check:checked+.selectable-card.personal {
+            border-color: var(--bs-purple);
+            box-shadow: 0 0 0 .25rem rgba(102, 16, 242, .25);
+        }
+
+        .btn-check:checked+.selectable-card.personal::after {
+            content: "✓";
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-weight: 700;
+            line-height: 1;
+            color: #fff;
+            background: var(--bs-purple);
+            border-radius: 999px;
+            width: 22px;
+            height: 22px;
+            display: grid;
+            place-items: center;
+            font-size: 14px;
+        }
+
         /* Metode BAYAR -> BIRU */
         .btn-check:checked+.selectable-card.pay {
             border-color: var(--bs-primary);
@@ -139,6 +162,42 @@
             gap: 12px;
             margin-top: 10px;
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+        
+        .menu-item {
+            border: 1px solid #eef0f3;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #fff;
+            transition: transform .12s ease, box-shadow .12s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-2px);
+            border-color: #dbe3ff;
+            box-shadow: 0 10px 22px rgba(13, 110, 253, .08);
+        }
+        
+        .menu-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .menu-item .menu-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #0f172a;
+        }
+        
+        .menu-item .menu-desc {
+            font-size: 0.85rem;
+            color: #64748b;
+            line-height: 1.4;
         }
 
         .menu-card.menu-mini {
@@ -247,8 +306,8 @@
           /** @var \App\Models\MealPackages $first */
           $first = $variantsSorted->first();
 
-          // warna highlight khusus utk Reguler/Premium
-          $cardClass = in_array(Str::lower($typeLabel), ['reguler','premium']) ? Str::lower($typeLabel) : '';
+          // warna highlight khusus utk Reguler/Premium/Personal
+          $cardClass = in_array(Str::lower($typeLabel), ['reguler','premium','personal']) ? Str::lower($typeLabel) : '';
         @endphp
 
         <div class="col-md-3">
@@ -659,16 +718,29 @@ function renderSpecModal(spec){
     if (!Array.isArray(items) || !items.length) {
       return `<div class="text-muted small">Tidak ada item.</div>`;
     }
-    return `
-      <div class="d-flex flex-wrap gap-2 mt-2">
-        ${items.map(it => `
-          <div class="card border shadow-sm bg-light-subtle" style="min-width: 120px; flex: 1 0 30%; max-width: 200px;">
-            <div class="card-body p-2 text-center">
-              <span class="fw-semibold small text-dark">${it}</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>`;
+    
+    // Array gambar makanan yang menarik
+    const foodImages = [
+      'https://picsum.photos/seed/healthy-food-1/300/200.jpg',
+      'https://picsum.photos/seed/healthy-food-2/300/200.jpg', 
+      'https://picsum.photos/seed/healthy-food-3/300/200.jpg',
+      'https://picsum.photos/seed/healthy-food-4/300/200.jpg',
+      'https://picsum.photos/seed/healthy-food-5/300/200.jpg',
+      'https://picsum.photos/seed/healthy-food-6/300/200.jpg',
+      'https://picsum.photos/seed/healthy-food-7/300/200.jpg',
+      'https://picsum.photos/seed/healthy-food-8/300/200.jpg'
+    ];
+    
+    return items.map((it, idx) => {
+      const imageUrl = foodImages[idx % foodImages.length];
+      return `
+        <div class="menu-item">
+          <img src="${imageUrl}" alt="${it.nama_menu || 'Menu ' + (idx + 1)}" class="menu-image">
+          <div class="menu-name">${it.nama_menu || 'Menu ' + (idx + 1)}</div>
+          <div class="menu-desc">${it.desc || 'Menu sehat lezat dan bergizi'}</div>
+        </div>
+      `;
+    }).join('');
   };
   const sectionCard = (title, items, icon) => `
     <div class="col-12">

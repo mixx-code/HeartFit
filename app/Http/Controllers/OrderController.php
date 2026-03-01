@@ -46,6 +46,7 @@ class OrderController extends Controller
             // eager-load user dan user.detail (hemat N+1)
             ->with([
                 'user:id,name,email,deleted_at',// sesuaikan kolom di user_details-mu
+                'user.detail:id,user_id,hp,alamat', // tambahkan hp dan alamat
             ])
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
@@ -59,10 +60,10 @@ class OrderController extends Controller
                                 ->where('name', 'like', "%{$q}%")
                                 ->orWhere('email', 'like', "%{$q}%");
                         })
-                        // cari di user_details (phone/address)
+                        // cari di user_details (hp/alamat)
                         ->orWhereHas('user.detail', function ($dq) use ($q) {
-                            $dq->where('phone', 'like', "%{$q}%")
-                                ->orWhere('address', 'like', "%{$q}%");
+                            $dq->where('hp', 'like', "%{$q}%")
+                                ->orWhere('alamat', 'like', "%{$q}%");
                         });
                 });
             })
@@ -754,6 +755,20 @@ class OrderController extends Controller
             'paid_at'     => optional($order->paid_at)?->toDateTimeString(),
             'updated_at'  => $order->updated_at->toDateTimeString(),
         ]);
+    }
+
+    public function show(Order $order)
+    {
+        // Eager load relationships to avoid N+1 queries
+        $order->load([
+            'user:id,name,email',
+            'user.detail:id,user_id,hp,alamat',
+            'paymentTransactions' => function ($query) {
+                $query->latest('attempt');
+            }
+        ]);
+
+        return view('admin.orders.show', compact('order'));
     }
 
     

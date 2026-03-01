@@ -47,6 +47,7 @@
                         <tr>
                             <th>No. Order</th>
                             <th>User</th>
+                            <th>WhatsApp</th>
                             <th>Paket</th>
                             <th>Periode</th>
                             <th>Total</th>
@@ -93,6 +94,27 @@
                                     </div>
                                 </td>
 
+                                {{-- WhatsApp (only for ahli_gizi and superadmin) --}}
+                                <td>
+                                    @if(in_array(auth()->user()->role, ['ahli_gizi', 'superadmin']))
+                                        @if($o->user?->detail?->hp)
+                                            <div class="d-flex align-items-center gap-1">
+                                                <small class="text-muted">{{ $o->user->detail->hp }}</small>
+                                                <a href="https://wa.me/62{{ substr($o->user->detail->hp, 1) }}" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-success"
+                                                   title="Chat via WhatsApp">
+                                                    <i class="bx bxl-whatsapp"></i>
+                                                </a>
+                                            </div>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+
                                 {{-- Paket (label + kategori/batch) --}}
                                 <td>
                                     {{ $o->package_label }}
@@ -120,6 +142,7 @@
                                 <td>
                                     @switch(strtoupper($o->status))
                                         @case('PAID')
+                                        @case('SETTLEMENT')
                                             <span class="badge bg-success">PAID</span>
                                         @break
 
@@ -149,7 +172,7 @@
                                 {{-- Actions (sesuaikan route adminmu jika berbeda) --}}
                                 <td>
                                     <div class="d-flex gap-1">
-                                        <a href=""
+                                        <a href="{{ route('admin.orders.show', $o) }}"
                                             class="btn btn-sm btn-outline-secondary">Detail</a>
 
                                         @if ($isUnpaid)
@@ -168,7 +191,7 @@
                             </tr>
                             @empty
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted">
+                                    <td colspan="11" class="text-center text-muted">
                                         Tidak ada data{{ request('q') ? ' untuk pencarian ini' : '' }}.
                                     </td>
                                 </tr>

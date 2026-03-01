@@ -188,6 +188,20 @@
                     </li>
                 </ul>
             </li>
+            <li class="menu-header small text-uppercase"><span class="menu-header-text">Orders</span></li>
+            <li class="menu-item {{ request()->routeIs('admin.orders.index') ? 'active open' : '' }}">
+                <a href="javascript:void(0);" class="menu-link menu-toggle">
+                    <i class="menu-icon tf-icons bx bx-detail"></i>
+                    <div data-i18n="Form Elements">Orders</div>
+                </a>
+                <ul class="menu-sub">
+                    <li class="menu-item {{ request()->routeIs('admin.orders.index') ? 'active' : '' }}">
+                        <a href="{{ route('admin.orders.index') }}" class="menu-link">
+                            <div data-i18n="Input groups">List Orders</div>
+                        </a>
+                    </li>
+                </ul>
+            </li>
         @endif
 
 

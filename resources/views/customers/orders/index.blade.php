@@ -32,9 +32,9 @@
         </form>
 
         {{-- (Opsional) tombol buat order baru --}}
-        <a class="btn btn-success" href="{{ route('orders.create') }}">
+        {{-- <a class="btn btn-success" href="{{ route('orders.create') }}">
           <i class="bi bi-plus-circle"></i> Buat Order
-        </a>
+        </a> --}}
       </div>
     </div>
 

@@ -210,4 +210,91 @@ class MealPackagesFactory extends Factory
             'price' => 170000
         ]);
     }
+
+     /* =========================
+       STATE KHUSUS PERSONAL
+       ========================= */
+
+    // MINGGUAN (2 item)
+    public function mingguanDuaKaliPersonal()
+    {
+        return $this->state(fn() => [
+            'jenis_paket' => 'paket mingguan',
+            'porsi_paket' => '4 hari 2 kali makan (siang dan sore)',
+            'total_hari'  => 4,
+            'detail_paket' => 'makan (Siang dan Sore)',
+            'price'=> 650000
+        ]);
+    }
+
+    public function mingguanSatuKaliPersonal()
+    {
+        return $this->state(fn() => [
+            'jenis_paket' => 'paket mingguan',
+            'porsi_paket' => '8 hari 1 kali makan (siang/malam saja)',
+            'total_hari'  => 8,
+            'detail_paket' => 'makan (Siang atau Malam)',
+            'price' => 650000
+        ]);
+    }
+
+    // BULANAN (2 item)
+    public function bulananDuaKaliPersonal()
+    {
+        return $this->state(fn() => [
+            'jenis_paket' => 'paket bulanan',
+            'porsi_paket' => '12 hari 2 kali makan (siang dan sore)',
+            'total_hari'  => 12,
+            'detail_paket' => 'makan (Siang dan Sore)',
+            'price' => 1950000
+        ]);
+    }
+
+    public function bulananSatuKaliPersonal()
+    {
+        return $this->state(fn() => [
+            'jenis_paket' => 'paket bulanan',
+            'porsi_paket' => '24 hari 1 kali makan (siang/malam saja)',
+            'total_hari'  => 24,
+            'detail_paket' => 'makan (Siang atau Malam)',
+            'price' => 1950000
+        ]);
+    }
+
+    // 3 BULANAN (2 item)
+    public function tigaBulananDuaKaliPersonal()
+    {
+        return $this->state(fn() => [
+            'jenis_paket' => 'paket 3 bulanan',
+            'porsi_paket' => '36 hari 2 kali makan (siang dan sore)',
+            'total_hari'  => 36,
+            'detail_paket' => 'makan (Siang dan Sore)',
+            'price' => 5830000
+        ]);
+    }
+
+    public function tigaBulananSatuKaliPersonal()
+    {
+        return $this->state(fn() => [
+            'jenis_paket' => 'paket 3 bulanan',
+            'porsi_paket' => '72 hari 1 kali makan (siang/malam saja)',
+            'total_hari'  => 72,
+            'detail_paket' => 'makan (Siang atau Malam)',
+            'price' => 5830000
+        ]);
+    }
+
+    // Harian Personal -> "2 kali makan (siang dan malam)"
+    public function harianPersonal()
+    {
+        return $this->state(fn() => [
+            'nama_meal_package' => 'paket harian personal',
+            'jenis_paket' => 'harian',
+            'porsi_paket' => '2 kali makan (siang dan malam)',
+            'total_hari'  => 1,
+            'detail_paket' => 'makan (Siang dan Malam)',
+            'price' => 170000
+        ]);
+    }
+
 }

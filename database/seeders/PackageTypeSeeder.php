@@ -15,10 +15,10 @@ class PackageTypeSeeder extends Seeder
     public function run(): void
     {
         $now = now();
-        DB::table('package_types')->insert([
+        DB::table('package_types')->insertOrIgnore([
             ['packageType' => 'Reguler',   'created_at' => $now, 'updated_at' => $now],
             ['packageType' => 'Premium',   'created_at' => $now, 'updated_at' => $now],
-            ['packageType' => 'Exclusive', 'created_at' => $now, 'updated_at' => $now],
+            ['packageType' => 'Personal', 'created_at' => $now, 'updated_at' => $now],
         ]);
     }
 }

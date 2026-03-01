@@ -173,12 +173,14 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     });
 
     // =======================
-    // ORDERS LIST — akses: admin + bendahara
+    // ORDERS LIST — akses: admin + superadmin + bendahara + ahli_gizi
     // (SATU DEFINISI ROUTE SAJA)
     // =======================
-    Route::middleware('role:admin,superadmin,bendahara')->group(function () {
+    Route::middleware('role:admin,superadmin,bendahara,ahli_gizi')->group(function () {
         // Tetap satu nama: admin.orders.index (biar menu kamu konsisten)
         Route::get('/admin/orders', [OrderController::class, 'viewOrderByAdmin'])->name('admin.orders.index');
+        // Detail order
+        Route::get('/admin/orders/{order}', [OrderController::class, 'show'])->name('admin.orders.show');
         // Kalau kamu mau URL khusus bendahara (mis. /bendahara/orders), beri NAMA BERBEDA
         // Route::get('/bendahara/orders', [OrderController::class, 'viewOrderByAdmin'])->name('bendahara.orders.index');
     });

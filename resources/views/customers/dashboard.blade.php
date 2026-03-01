@@ -1,5 +1,5 @@
 @extends('layouts.app')
-
+@include('customers.partials.package-detail-modal')
 @section('title', 'Dashboard')
 
 @section('content')
@@ -233,72 +233,60 @@
             <div id="paket" class="col-12">
                 <section class="py-5 bg-white border rounded-3">
                     <div class="container">
-                        {{-- Header Reguler --}}
+                        {{-- Header --}}
                         <div class="text-center mb-4">
-                            <h3 class="fw-bold text-primary mb-1">HeartFit Diet Reguler</h3>
+                            <h3 class="fw-bold text-primary mb-1">HeartFit Diet Packages</h3>
                             <p class="text-secondary mb-0">Pilihan paket makan sehat untuk kebutuhan harian Anda.</p>
                         </div>
 
-                        {{-- === Card Paket Reguler === --}}
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <div class="card border-0 shadow-lg h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h6 class="text-uppercase text-secondary mb-1">Reguler</h6>
-                                        <div class="h3 fw-bold mt-1">Rp 50.000,-</div>
-                                        <ul class="list-group list-group-flush mt-3">
-                                            <li class="list-group-item">Menu seimbang</li>
-                                            <li class="list-group-item">Pilihan karbo sehat</li>
-                                        </ul>
-                                        <a href="" class="btn btn-outline-primary mt-3 w-100">Pesan Paket</a>
+                        {{-- === Cards Paket === --}}
+                        <div class="row g-3 justify-content-center">
+                            @foreach($packages as $key => $pkg)
+                                <div class="col-md-3">
+                                    <div class="card border-0 shadow-lg h-100">
+                                        <div class="card-body d-flex flex-column justify-content-center text-center">
+                                            <h6 class="text-uppercase text-xl fw-bold mb-3">{{ $pkg['type'] }}</h6>
+                                            @if($pkg['meal_packages']->count() > 0)
+                                                @php
+                                                    $prices = $pkg['meal_packages']->pluck('price')->sort()->values();
+                                                    $minPrice = $prices->first();
+                                                    $maxPrice = $prices->last();
+                                                    $price = $minPrice && $maxPrice ? 
+                                                        number_format($minPrice, 0, ',', '.') . ' - ' . number_format($maxPrice, 0, ',', '.') : 
+                                                        number_format($pkg['meal_packages']->first()->price, 0, ',', '.');
+                                                @endphp
+                                                <div class="mb-1">
+                                                    <div class="text-xl fw-bold mb-0 text-secondary">Rp {{ $price }},-</div>
+                                                    @if($minPrice && $maxPrice && $minPrice != $maxPrice)
+                                                        <div class="text-white-50 small">Rp {{ number_format($minPrice, 0, ',', '.') }} dan Rp {{ number_format($maxPrice, 0, ',', '.') }}</div>
+                                                    @endif
+                                                </div>
+                                                <ul class="list-group list-group-flush">
+                                                  @if($key === 'reguler')
+                                                    <li class="list-group-item">Menu seimbang</li>
+                                                    <li class="list-group-item">Pilihan karbo sehat</li>
+                                                  @elseif($key === 'premium')
+                                                    <li class="list-group-item">Menu premium</li>
+                                                    <li class="list-group-item">Protein tinggi</li>
+                                                    <li class="list-group-item">Nutrisi optimal</li>
+                                                  @elseif($key === 'personal')
+                                                    <li class="list-group-item">Menu personal</li>
+                                                    <li class="list-group-item">Konsultasi ahli gizi</li>
+                                                    <li class="list-group-item">Program kustom</li>
+                                                  @endif
+                                                </ul>
+                                                <div class="mt-auto pt-2">
+                                                  <button type="button" class="btn btn-outline-primary w-100"
+                                                          onclick="openPackageModal('{{ $key }}')">
+                                                      <i class="bx bx-list-ul me-2"></i>Detail Paket
+                                                  </button>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="card border-0 shadow-lg h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h6 class="text-uppercase text-secondary mb-1">Mingguan</h6>
-                                        <div class="h3 fw-bold mt-1">Rp 400.000,-</div>
-                                        <ul class="list-group list-group-flush mt-3">
-                                            <li class="list-group-item">4 hari × 2 kali makan</li>
-                                            <li class="list-group-item">8 hari × 1 kali makan</li>
-                                        </ul>
-                                        <a href="" class="btn btn-primary mt-3 w-100">Pesan Paket</a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="card border-0 shadow-lg h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h6 class="text-uppercase text-secondary mb-1">Bulanan</h6>
-                                        <div class="h3 fw-bold mt-1">Rp 1.180.000,-</div>
-                                        <ul class="list-group list-group-flush mt-3">
-                                            <li class="list-group-item">12 hari × 2 kali makan</li>
-                                            <li class="list-group-item">24 hari × 1 kali makan</li>
-                                        </ul>
-                                        <a href="" class="btn btn-primary mt-3 w-100">Pesan Paket</a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-3">
-                                <div class="card border-0 shadow-lg h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h6 class="text-uppercase text-secondary mb-1">3 Bulanan</h6>
-                                        <div class="h3 fw-bold mt-1">Rp 3.540.000,-</div>
-                                        <ul class="list-group list-group-flush mt-3">
-                                            <li class="list-group-item">36 hari × 2 kali makan</li>
-                                            <li class="list-group-item">72 hari × 1 kali makan</li>
-                                        </ul>
-                                        <a href="" class="btn btn-primary mt-3 w-100">Pesan Paket</a>
-                                    </div>
-                                </div>
-                            </div>
+                            @endforeach
                         </div>
-
-                        {{-- ... (lanjutan Premium dan kalender tetap sama seperti sebelumnya) ... --}}
                     </div>
                 </section>
             </div>
@@ -312,4 +300,5 @@
 
         </div>
     </div>
+</div>
 @endsection

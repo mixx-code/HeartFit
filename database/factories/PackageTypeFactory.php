@@ -17,7 +17,7 @@ class PackageTypeFactory extends Factory
     public function definition(): array
     {
         return [
-            'packageType' => $this->faker->randomElement(['Reguler', 'Premium', 'Exclusive'])
+            'packageType' => $this->faker->randomElement(['Reguler', 'Premium', 'Personal'])
         ];
     }
 }
