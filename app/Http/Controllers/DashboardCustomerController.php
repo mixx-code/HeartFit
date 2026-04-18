@@ -48,7 +48,7 @@ class DashboardCustomerController extends Controller
 
             // Ambil menu makanan aktif - SAMAKAN DENGAN ORDER CONTROLLER
             $menus = MenuMakanan::where('batch', 'I')
-                ->get(['id', 'nama_menu', 'serve_days', 'spec_menu'])
+                ->get(['id', 'nama_menu', 'serve_days', 'spec_menu', 'foto_makanan']) 
                 ->map(function ($m) {
                     $serve = is_array($m->serve_days) ? $m->serve_days : [];
                     $serve = array_values(array_filter(array_map(fn($v) => (int) $v, $serve), fn($n) => $n >= 1 && $n <= 31));
@@ -58,6 +58,7 @@ class DashboardCustomerController extends Controller
                         'nama_menu'  => $m->nama_menu,
                         'serve_days' => $serve,                  // <- array angka siap pakai
                         'spec_menu'  => $m->spec_menu ?? [],     // <- array asosiatif (section => [items])
+                        'foto_makanan' => $m->foto_makanan ?? [], // <- array foto paths 
                     ];
                 })
                 ->values()
@@ -70,11 +71,24 @@ class DashboardCustomerController extends Controller
             // Debug: Log data untuk troubleshooting
             \Log::info('Package Types:', $packageTypes->toArray());
             \Log::info('All Menus:', $menus);
+            
+            // Debug foto_makanan untuk setiap menu
+            if (!empty($menus)) {
+                foreach ($menus as $index => $menu) {
+                    $fotoCount = isset($menu['foto_makanan']) ? count($menu['foto_makanan']) : 0;
+                    \Log::info("Menu {$index}: {$menu['nama_menu']}, foto_count: {$fotoCount}");
+                }
+            }
+
+            \Log::info('About to enter try-catch block for package building');
 
             // Format data untuk view dengan ID unik
             $packages = [];
+            \Log::info('Starting to build packages array');
+            
             foreach ($packageTypes as $type) {
                 $packageKey = strtolower($type->packageType);
+                \Log::info("Processing package: {$packageKey}");
                 
                 // Perbaikan filtering logic untuk menu - TAMPILKAN SEMUA MENU
                 $filteredMenus = array_filter($menus, function($menu) use ($type) {
@@ -114,6 +128,16 @@ class DashboardCustomerController extends Controller
                 // Debug: Log semua menu yang tersedia
                 \Log::info('Fallback menus available:', $allMenus->toArray());
                 
+                // Debug detail untuk setiap menu
+                foreach ($allMenus as $index => $menu) {
+                    \Log::info("Raw menu {$index}: " . json_encode([
+                        'nama_menu' => $menu->nama_menu,
+                        'foto_makanan' => $menu->foto_makanan,
+                        'foto_type' => gettype($menu->foto_makanan),
+                        'foto_count' => is_array($menu->foto_makanan) ? count($menu->foto_makanan) : 0
+                    ]));
+                }
+                
                 // Convert to array format yang sama dengan query utama
                 $allMenusArray = $allMenus->map(function ($m) {
                     $serve = is_array($m->serve_days) ? $m->serve_days : [];
@@ -124,6 +148,7 @@ class DashboardCustomerController extends Controller
                         'nama_menu'  => $m->nama_menu,
                         'serve_days' => $serve,
                         'spec_menu'  => $m->spec_menu ?? [],
+                        'foto_makanan' => $m->foto_makanan ?? [], // Tambahkan foto
                     ];
                 })->toArray();
                 

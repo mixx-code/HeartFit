@@ -258,6 +258,19 @@
 
 @section('content')
     <div class="container-xxl flex-grow-1 container-p-y">
+        {{-- Notifikasi Pesan Ulang --}}
+        @if($preselectedPackage)
+            <div class="alert alert-warning border-0 shadow-sm mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bx bx-refresh me-3 fs-4"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Pesan Ulang Paket</h6>
+                        <small class="text-muted">Anda sedang memesan ulang paket yang sebelumnya expired. Silakan lengkapi data pesanan.</small>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <section class="py-5 bg-white border rounded-3">
             <div class="container">
 
@@ -495,6 +508,26 @@
                             </div>
                         </div>
 
+                        {{-- CATATAN PESANAN (Hanya untuk paket personal) --}}
+                        <div class="card border-0 shadow-sm d-none" id="notesCard">
+                            <div class="card-body">
+                                <label for="orderNotes" class="form-label fw-semibold">
+                                    <i class="bx bx-comment-dots me-2"></i>Catatan Khusus (Opsional)
+                                </label>
+                                <textarea 
+                                    name="notes" 
+                                    id="orderNotes" 
+                                    class="form-control" 
+                                    rows="3" 
+                                    placeholder="Tambahkan catatan khusus untuk paket personal Anda (contoh: preferensi makanan, alergi, tujuan diet, dll.)"
+                                    maxlength="500"
+                                ></textarea>
+                                <div class="form-text">
+                                    <small>Maksimal 500 karakter. Catatan akan dilihat oleh ahli gizi.</small>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="alert alert-info mt-3 small mb-0">
                             Jadwal pengantaran & preferensi menu dapat diatur setelah checkout.
                         </div>
@@ -565,6 +598,7 @@
 // ====== DATA DARI SERVER ======
 const PACKAGES      = @json($packagesMap);   // { [id]: {id,label,category,price,durationDays,batch, ... } }
 const MENUS_BATCH_I = @json($menusBatchI);   // [ {id,nama_menu,serve_days:[..],spec_menu:{...}}, ... ]
+const PRESELECTED_PACKAGE = @json($preselectedPackage); // package_key dari tombol pesan ulang
 
 // ====== UTIL ======
 const rupiah = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(n);
@@ -719,25 +753,13 @@ function renderSpecModal(spec){
       return `<div class="text-muted small">Tidak ada item.</div>`;
     }
     
-    // Array gambar makanan yang menarik
-    const foodImages = [
-      'https://picsum.photos/seed/healthy-food-1/300/200.jpg',
-      'https://picsum.photos/seed/healthy-food-2/300/200.jpg', 
-      'https://picsum.photos/seed/healthy-food-3/300/200.jpg',
-      'https://picsum.photos/seed/healthy-food-4/300/200.jpg',
-      'https://picsum.photos/seed/healthy-food-5/300/200.jpg',
-      'https://picsum.photos/seed/healthy-food-6/300/200.jpg',
-      'https://picsum.photos/seed/healthy-food-7/300/200.jpg',
-      'https://picsum.photos/seed/healthy-food-8/300/200.jpg'
-    ];
-    
     return items.map((it, idx) => {
-      const imageUrl = foodImages[idx % foodImages.length];
       return `
-        <div class="menu-item">
-          <img src="${imageUrl}" alt="${it.nama_menu || 'Menu ' + (idx + 1)}" class="menu-image">
-          <div class="menu-name">${it.nama_menu || 'Menu ' + (idx + 1)}</div>
-          <div class="menu-desc">${it.desc || 'Menu sehat lezat dan bergizi'}</div>
+        <div class="d-flex align-items-center mb-2 p-2 bg-light rounded-3">
+          <i class="bx bx-check-circle text-success me-2 fs-5"></i>
+          <div class="flex-grow-1">
+            <div class="fw-medium text-dark">${it}</div>
+          </div>
         </div>
       `;
     }).join('');
@@ -745,14 +767,16 @@ function renderSpecModal(spec){
   const sectionCard = (title, items, icon) => `
     <div class="col-12">
       <div class="card border-0 shadow-sm mb-3">
-        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 border-start border-3 border-secondary-subtle">
-          <span>${icon}</span><span>${title}</span>
+        <div class="card-header bg-white fw-semibold d-flex align-items-center gap-2 border-start border-3 border-primary-subtle">
+          <span class="fs-5">${icon}</span>
+          <span class="text-primary">${title}</span>
         </div>
         <div class="card-body">
           ${makeMiniCards(items)}
         </div>
       </div>
-    </div>`;
+    </div>
+  `;
   const sections = ORDER
     .filter(s => Object.prototype.hasOwnProperty.call(spec, s.key))
     .map(s => sectionCard(s.key, spec[s.key], s.icon))
@@ -765,18 +789,42 @@ function renderSpecModal(spec){
 }
 
 function renderCards(items){
+  console.log('renderCards called with items:', items);
   if(!items.length){
     return `<div class="alert alert-secondary mb-0 small">Belum ada menu untuk tanggal ini.</div>`;
   }
   return `
     <div class="row row-cols-1 g-2">
-      ${items.map(it=>{
+      ${items.map((it,index)=>{
         const specStr = encodeURIComponent(JSON.stringify(it.spec_menu||{}));
         const nameStr = encodeURIComponent(it.nama_menu ?? '-');
+        const fotoStr = encodeURIComponent(JSON.stringify(it.foto_makanan||[]));
+        const firstFoto = it.foto_makanan && it.foto_makanan.length > 0 ? it.foto_makanan[0] : null;
+        
+        console.log(`Item ${index}:`, {
+          nama_menu: it.nama_menu,
+          foto_makanan: it.foto_makanan,
+          firstFoto: firstFoto
+        });
+        
         return `
           <div class="col">
             <div class="card h-100 shadow-sm border-0 position-relative menu-card"
-                 data-menu-name="${nameStr}" data-menu-spec="${specStr}">
+                 data-menu-name="${nameStr}" data-menu-spec="${specStr}" data-menu-foto="${fotoStr}">
+              ${firstFoto ? `
+                <div class="position-relative" style="height: 120px; overflow: hidden;">
+                  <img src="/storage/${firstFoto}" 
+                       class="card-img-top" 
+                       style="width: 100%; height: 100%; object-fit: cover;"
+                       alt="${it.nama_menu || 'Menu'}">
+                </div>
+              ` : `
+                <div class="position-relative" style="height: 120px; overflow: hidden; background: #f8f9fa;">
+                  <div class="d-flex align-items-center justify-content-center h-100">
+                    <i class="bx bx-restaurant fs-1 text-muted"></i>
+                  </div>
+                </div>
+              `}
               <div class="card-body">
                 <h6 class="card-title mb-1 text-dark fw-semibold">${it.nama_menu ?? '-'}</h6>
                 <p class="card-text text-muted small mb-0">Klik untuk lihat detail</p>
@@ -840,20 +888,68 @@ function ensureMenuModal(){
   }
   return menuModal;
 }
-function showMenuModal(menuName,spec){
+function showMenuModal(menuName,spec,fotos){
   const titleEl=document.getElementById('menuDetailTitle');
   const bodyEl =document.getElementById('menuDetailBody');
   if(titleEl) titleEl.textContent = menuName || 'Detail Menu';
-  if(bodyEl)  bodyEl.innerHTML   = renderSpecModal(spec);
+  
+  // Tambahkan foto di bagian atas modal
+  let fotoHtml = '';
+  if(fotos && fotos.length > 0) {
+    fotoHtml = `
+      <div class="mb-4">
+        <h6 class="mb-3 d-flex align-items-center gap-2">
+          <i class="bx bx-image text-primary"></i>
+          <span>Foto Menu</span>
+        </h6>
+        <div class="row g-3">
+          ${fotos.map((foto, index) => `
+            <div class="col-md-4 col-sm-6 col-6">
+              <div class="card border-0 shadow-sm overflow-hidden foto-menu-item">
+                <div class="position-relative" style="height: 200px;">
+                  <img src="/storage/${foto}" 
+                       class="w-100 h-100" 
+                       style="object-fit: cover; transition: transform 0.3s ease;"
+                       onmouseover="this.style.transform='scale(1.05)'"
+                       onmouseout="this.style.transform='scale(1)'"
+                       onclick="window.open('/storage/${foto}', '_blank')"
+                       alt="Foto menu ${index + 1}">
+                  <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-dark bg-opacity-75 text-white">
+                      <i class="bx bx-expand"></i>
+                    </span>
+                  </div>
+                </div>
+                <div class="card-body p-2 text-center">
+                  <small class="text-muted">Foto ${index + 1}</small>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+  
+  if(bodyEl)  bodyEl.innerHTML = fotoHtml + renderSpecModal(spec);
   const inst=ensureMenuModal(); if(inst) inst.show();
 }
 function attachMenuCardEvents(){
   const cards=document.querySelectorAll('#menuPreview .menu-card');
-  cards.forEach(card=>{
+  console.log('Found menu cards:', cards.length);
+  cards.forEach((card,index)=>{
     card.addEventListener('click',()=>{
       const name=decodeURIComponent(card.dataset.menuName||'');
       const spec=JSON.parse(decodeURIComponent(card.dataset.menuSpec||'%7B%7D'));
-      showMenuModal(name,spec);
+      const fotos=JSON.parse(decodeURIComponent(card.dataset.menuFoto||'%5B%5D'));
+      
+      console.log(`Card ${index} clicked:`, {
+        name,
+        fotos,
+        fotoCount: fotos ? fotos.length : 0
+      });
+      
+      showMenuModal(name,spec,fotos);
     });
   });
 }
@@ -984,6 +1080,20 @@ function fillSummary(){
   renderMenuChips(names);
   renderSummaryMenuList(names);
 
+  // Tampilkan/sembunyikan field catatan untuk paket personal
+  const notesCard = document.getElementById('notesCard');
+  if (notesCard) {
+    const isPersonal = category && category.toLowerCase() === 'personal';
+    if (isPersonal) {
+      notesCard.classList.remove('d-none');
+    } else {
+      notesCard.classList.add('d-none');
+      // Clear notes jika bukan personal
+      const notesField = document.getElementById('orderNotes');
+      if (notesField) notesField.value = '';
+    }
+  }
+
   // Hitung amount_total (kalau belum ada logika ongkir/diskon, samakan dengan priceNum)
 const amountTotal = priceNum;
 
@@ -1056,6 +1166,26 @@ form.addEventListener('submit', e => {
 
 // ====== START ======
 showStep(1);
+
+// Auto-select package jika ada preselectedPackage dari tombol pesan ulang
+if (PRESELECTED_PACKAGE) {
+    const preselectedRadio = document.querySelector(`input[name="package_key"][value="${PRESELECTED_PACKAGE}"]`);
+    if (preselectedRadio) {
+        preselectedRadio.checked = true;
+        // Trigger change event untuk update UI
+        preselectedRadio.dispatchEvent(new Event('change'));
+        
+        // Auto-advance ke step 2 setelah delay untuk UX yang lebih baik
+        setTimeout(() => {
+            if (getChosenKey()) {
+                showStep(2);
+                if(!startDate.value) startDate.value = toYMD(tomorrow);
+                autoFillEndDate(); updatePeriodInfo();
+                renderMenusLocalRange(startDate.value,endDate.value);
+            }
+        }, 500);
+    }
+}
 </script>
 @endpush
 

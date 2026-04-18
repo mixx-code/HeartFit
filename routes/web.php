@@ -219,6 +219,8 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::get('/customer/orders/{order}/finish', [OrderController::class, 'finish'])->name('orders.finish');
         Route::post('/customer/orders/{order}/confirm', [OrderController::class, 'confirm'])->name('orders.confirm');
         Route::get('/customer/orders/{order}/status', [OrderController::class, 'statusJson'])->name('orders.status');
+        Route::get('/customer/orders/{order}/check-payment', [OrderController::class, 'checkPaymentStatus'])->name('orders.check-payment');
+        Route::get('/customer/orders/{order}/generate-pdf', [OrderController::class, 'generatePdf'])->name('orders.generate-pdf');
         Route::post('/customer/orders/{order}/snap-result', [OrderController::class, 'snapResult'])
             ->name('orders.snap_result');
             // Public steps

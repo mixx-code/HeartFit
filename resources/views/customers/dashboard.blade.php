@@ -301,4 +301,11 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    // Pass package data ke modal
+    const modalData = @json($packages);
+</script>
+@endpush
 @endsection

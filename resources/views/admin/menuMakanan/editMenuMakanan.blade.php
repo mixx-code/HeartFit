@@ -33,7 +33,8 @@
 
                 <div class="card-body">
                     <form method="POST" 
-                    {{-- action="{{ route('admin.menuMakanan.update', $menuMakanan->id) }}" --}}
+                    action="{{ route('admin.menuMakanan.update', $menuMakanan->id) }}"
+                    enctype="multipart/form-data"
                     >
                         @csrf
                         @method('PUT')
@@ -65,6 +66,43 @@
                                        placeholder="Contoh: II" value="{{ old('batch', $menuMakanan->batch) }}" required>
                             </div>
                             <small class="text-muted">Contoh: I, II, III</small>
+                        </div>
+
+                        {{-- Upload Foto --}}
+                        <div class="mb-3">
+                            <label class="form-label" for="foto_makanan">
+                                <i class="bx bx-image"></i> Foto Makanan
+                            </label>
+                            <input type="file" id="foto_makanan" name="foto_makanan[]" class="form-control" 
+                                accept="image/jpeg,image/jpg,image/png" multiple>
+                            <small class="text-muted d-block mt-1">
+                                Upload foto menu (jpeg, jpg, png). Maksimal 5 foto, 2MB per foto.
+                            </small>
+                            
+                            @if($menuMakanan->foto_makanan && count($menuMakanan->foto_makanan) > 0)
+                                <div class="mt-3">
+                                    <p class="text-muted small mb-2">Foto yang sudah ada:</p>
+                                    <div class="row g-2" id="existingPhotos">
+                                        @foreach($menuMakanan->foto_makanan as $index => $foto)
+                                            <div class="col-3" data-foto-index="{{ $index }}">
+                                                <div class="position-relative">
+                                                    <img src="{{ asset('storage/' . $foto) }}" class="img-fluid rounded" 
+                                                         style="max-height: 100px; width: 100%; object-fit: cover;">
+                                                    <div class="position-absolute top-0 end-0 m-1">
+                                                        <small class="badge bg-secondary me-1">{{ $index + 1 }}</small>
+                                                        <button type="button" class="btn btn-sm btn-danger" onclick="removeExistingFoto({{ $index }})" title="Hapus foto">
+                                                            <i class="bx bx-x"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                            
+                            <div id="fotoPreview" class="mt-2 row g-2"></div>
+                        <input type="hidden" id="removed_fotos" name="removed_fotos" value="">
                         </div>
 
                         {{-- Preview Serve Days --}}
@@ -152,6 +190,84 @@
 @push('scripts')
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    // ====== Foto Preview ======
+    const fotoInput = document.getElementById('foto_makanan');
+    const fotoPreview = document.getElementById('fotoPreview');
+    
+    console.log('Foto input:', fotoInput);
+    console.log('Foto preview:', fotoPreview);
+
+    if (fotoInput && fotoPreview) {
+        fotoInput.addEventListener('change', function(e) {
+            console.log('Foto input changed');
+            fotoPreview.innerHTML = '';
+            const files = Array.from(e.target.files).slice(0, 5); // Maksimal 5 foto
+            console.log('Files:', files);
+
+            files.forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-3';
+                        col.innerHTML = `
+                            <div class="position-relative">
+                                <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100px; width: 100%; object-fit: cover;">
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeFoto(${index})">
+                                    <i class="bx bx-x"></i>
+                                </button>
+                            </div>
+                        `;
+                        fotoPreview.appendChild(col);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        // Fungsi untuk menghapus foto
+        window.removeFoto = function(index) {
+            const dt = new DataTransfer();
+            const files = Array.from(fotoInput.files);
+            files.splice(index, 1);
+            
+            files.forEach(file => {
+                dt.items.add(file);
+            });
+            
+            fotoInput.files = dt.files;
+            
+            // Trigger ulang preview
+            const event = new Event('change', { bubbles: true });
+            fotoInput.dispatchEvent(event);
+        };
+    } else {
+        console.error('Foto input atau preview tidak ditemukan');
+    }
+
+    // ====== Remove Existing Foto ======
+    window.removeExistingFoto = function(index) {
+        console.log('Removing existing foto:', index);
+        
+        // Hide the foto element
+        const fotoElement = document.querySelector(`[data-foto-index="${index}"]`);
+        if (fotoElement) {
+            fotoElement.style.display = 'none';
+            fotoElement.classList.add('removed');
+        }
+        
+        // Track removed fotos
+        const removedFotosInput = document.getElementById('removed_fotos');
+        const existingFotos = @json($menuMakanan->foto_makanan ?? []);
+        const removedFotos = removedFotosInput.value ? JSON.parse(removedFotosInput.value) : [];
+        
+        if (existingFotos[index]) {
+            removedFotos.push(existingFotos[index]);
+            removedFotosInput.value = JSON.stringify(removedFotos);
+            console.log('Removed fotos:', removedFotos);
+        }
+    };
+
     // ====== Mapping Serve Days ======
     const serveDaysFor = (n) => {
         n = parseInt(n, 10);

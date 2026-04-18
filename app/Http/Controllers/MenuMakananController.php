@@ -59,6 +59,10 @@ class MenuMakananController extends Controller
             // serve_days dikirim sebagai JSON string oleh JS
             'serve_days'     => ['required', 'string'],
 
+            // Upload foto
+            'foto_makanan'   => ['nullable', 'array', 'max:5'],
+            'foto_makanan.*' => ['image', 'mimes:jpeg,jpg,png', 'max:2048'],
+
             // Input dinamis (array string)
             'makan_siang'    => ['sometimes', 'array'],
             'makan_siang.*'  => ['nullable', 'string', 'max:200'],
@@ -66,9 +70,25 @@ class MenuMakananController extends Controller
             'makan_malam.*'  => ['nullable', 'string', 'max:200'],
         ], [
             'serve_days.required'  => 'Serve days belum terbentuk, silakan pilih menu.',
+            'foto_makanan.max'    => 'Maksimal upload 5 foto.',
+            'foto_makanan.*.image' => 'File harus berupa gambar.',
+            'foto_makanan.*.mimes' => 'Format foto harus jpeg, jpg, atau png.',
+            'foto_makanan.*.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
-        // 2) Parse & validasi serve_days (JSON -> array angka)
+        // 2) Upload foto jika ada
+        $fotoPaths = [];
+        if ($request->hasFile('foto_makanan')) {
+            foreach ($request->file('foto_makanan') as $file) {
+                if ($file->isValid()) {
+                    // Simpan ke storage/app/public/menu_makanan
+                    $path = $file->store('menu_makanan', 'public');
+                    $fotoPaths[] = $path;
+                }
+            }
+        }
+
+        // 3) Parse & validasi serve_days (JSON -> array angka)
         $serveDays = json_decode($validated['serve_days'], true);
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($serveDays)) {
             return back()->withInput()->withErrors([
@@ -80,7 +100,7 @@ class MenuMakananController extends Controller
         $serveDays = array_values(array_unique(array_map('intval', $serveDays)));
         sort($serveDays);
 
-        // 3) Infer nomor menu dari serve_days:
+        // 4) Infer nomor menu dari serve_days:
         // - Jika [31]  -> menu = 11
         // - Selain itu  -> menu = hari pertama (harus pola [n, n+10, n+20] & <=31)
         $inferredMenu = null;
@@ -104,7 +124,7 @@ class MenuMakananController extends Controller
             ]);
         }
 
-        // 4) Bentuk spesifikasi menu dari input dinamis
+        // 5) Bentuk spesifikasi menu dari input dinamis
         $siang = array_values(array_filter(
             array_map('trim', (array) $request->input('makan_siang', [])),
             'strlen'
@@ -125,19 +145,20 @@ class MenuMakananController extends Controller
             'Makan Malam' => $malam,
         ];
 
-        // 5) Nama menu: pakai hidden kalau ada; jika kosong, auto dari hasil infer
+        // 6) Nama menu: pakai hidden kalau ada; jika kosong, auto dari hasil infer
         $namaMenu = $validated['nama_menu'] ?: ('Menu ' . $inferredMenu);
 
-        // 6) Simpan
+        // 7) Simpan
         MenuMakanan::create([
             'nama_menu'  => $namaMenu,
             'batch'      => $validated['batch'] ?? null,
             'serve_days' => $serveDays, // pastikan casts di model
             'spec_menu'  => $spec,
+            'foto_makanan' => $fotoPaths, // simpan array path foto
             'created_by' => Auth::id(),
         ]);
 
-        // 7) Redirect
+        // 8) Redirect
         return redirect()
             ->route('admin.menuMakanan') // atau index kalau itu yang kamu pakai
             ->with('success', 'Menu berhasil disimpan.');
@@ -173,6 +194,10 @@ class MenuMakananController extends Controller
             // serve_days dikirim sebagai JSON string oleh JS (hidden)
             'serve_days'     => ['required'], // terima string atau array
 
+            // Upload foto
+            'foto_makanan'   => ['nullable', 'array', 'max:5'],
+            'foto_makanan.*' => ['image', 'mimes:jpeg,jpg,png', 'max:2048'],
+
             // Input dinamis (array string)
             'makan_siang'    => ['sometimes', 'array'],
             'makan_siang.*'  => ['nullable', 'string', 'max:200'],
@@ -180,9 +205,48 @@ class MenuMakananController extends Controller
             'makan_malam.*'  => ['nullable', 'string', 'max:200'],
         ], [
             'serve_days.required'  => 'Serve days belum terbentuk, silakan pilih menu.',
+            'foto_makanan.max'    => 'Maksimal upload 5 foto.',
+            'foto_makanan.*.image' => 'File harus berupa gambar.',
+            'foto_makanan.*.mimes' => 'Format foto harus jpeg, jpg, atau png.',
+            'foto_makanan.*.max' => 'Ukuran foto maksimal 2MB.',
         ]);
 
-        // 2) Parse & validasi serve_days -> array angka
+        // 2) Upload foto jika ada dan hapus foto yang dipilih
+        $fotoPaths = $menuMakanan->foto_makanan ?? []; // Ambil foto lama
+        
+        // Hapus foto yang dipilih user
+        $removedFotos = $request->input('removed_fotos');
+        if ($removedFotos) {
+            $removedFotosArray = json_decode($removedFotos, true) ?: [];
+            foreach ($removedFotosArray as $removedFoto) {
+                // Hapus dari storage
+                $fullPath = storage_path('app/public/' . $removedFoto);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+                
+                // Hapus dari array
+                $key = array_search($removedFoto, $fotoPaths);
+                if ($key !== false) {
+                    unset($fotoPaths[$key]);
+                }
+            }
+            // Reindex array
+            $fotoPaths = array_values($fotoPaths);
+        }
+        
+        // Upload foto baru jika ada
+        if ($request->hasFile('foto_makanan')) {
+            foreach ($request->file('foto_makanan') as $file) {
+                if ($file->isValid()) {
+                    // Simpan ke storage/app/public/menu_makanan
+                    $path = $file->store('menu_makanan', 'public');
+                    $fotoPaths[] = $path;
+                }
+            }
+        }
+
+        // 3) Parse & validasi serve_days -> array angka
         $serveInput = $validated['serve_days'];
 
         if (is_string($serveInput)) {
@@ -211,7 +275,7 @@ class MenuMakananController extends Controller
         $serveDays = array_values(array_unique(array_map('intval', $serveDays)));
         sort($serveDays);
 
-        // 3) Infer nomor menu dari serve_days
+        // 4) Infer nomor menu dari serve_days
         $inferredMenu = null;
         $validPattern = false;
 
@@ -232,7 +296,7 @@ class MenuMakananController extends Controller
             ]);
         }
 
-        // 4) Bentuk spesifikasi menu dari input dinamis
+        // 5) Bentuk spesifikasi menu dari input dinamis
         $siang = array_values(array_filter(
             array_map('trim', (array) $request->input('makan_siang', [])),
             'strlen'
@@ -253,23 +317,24 @@ class MenuMakananController extends Controller
             'Makan Malam' => $malam,
         ];
 
-        // 5) Nama menu:
+        // 6) Nama menu:
         // - Jika ada input, pakai input
         // - Jika kosong, pertahankan yang lama; jika lama kosong juga, auto dari infer
         $namaMenu = $validated['nama_menu']
             ?: ($menuMakanan->nama_menu ?: ('Menu ' . $inferredMenu));
 
-        // 6) Update
+        // 7) Update
         $menuMakanan->update([
             'nama_menu'  => $namaMenu,
             'batch'      => $validated['batch'] ?? null,
             'serve_days' => $serveDays, // model casts ke array
             'spec_menu'  => $spec,      // model casts ke array
+            'foto_makanan' => $fotoPaths, // update foto
             'updated_by' => Auth::id(),
             
         ]);
 
-        // 7) Redirect
+        // 8) Redirect
         return redirect()
             ->route('admin.menuMakanan') // <-- sesuaikan jika nama route index-mu berbeda
             ->with('success', 'Menu berhasil diperbarui.');

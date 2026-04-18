@@ -11,7 +11,7 @@
                 </div>
 
                 <div class="card-body">
-                    <form method="POST" action="{{ route('admin.menuMakanan.store') }}">
+                    <form method="POST" action="{{ route('admin.menuMakanan.store') }}" enctype="multipart/form-data">
                         @csrf
 
                         {{-- Nama Menu --}}
@@ -40,6 +40,19 @@
                                     placeholder="Contoh: II" required>
                             </div>
                             <small class="text-muted">Contoh: I, II, III</small>
+                        </div>
+
+                        {{-- Upload Foto --}}
+                        <div class="mb-3">
+                            <label class="form-label" for="foto_makanan">
+                                <i class="bx bx-image"></i> Foto Makanan
+                            </label>
+                            <input type="file" id="foto_makanan" name="foto_makanan[]" class="form-control" 
+                                accept="image/jpeg,image/jpg,image/png" multiple>
+                            <small class="text-muted d-block mt-1">
+                                Upload foto menu (jpeg, jpg, png). Maksimal 5 foto, 2MB per foto.
+                            </small>
+                            <div id="fotoPreview" class="mt-2 row g-2"></div>
                         </div>
 
                         {{-- Preview Serve Days --}}
@@ -107,6 +120,52 @@
 @push('scripts')
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // ====== Foto Preview ======
+            const fotoInput = document.getElementById('foto_makanan');
+            const fotoPreview = document.getElementById('fotoPreview');
+
+            fotoInput.addEventListener('change', function(e) {
+                fotoPreview.innerHTML = '';
+                const files = Array.from(e.target.files).slice(0, 5); // Maksimal 5 foto
+
+                files.forEach((file, index) => {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const col = document.createElement('div');
+                            col.className = 'col-3';
+                            col.innerHTML = `
+                                <div class="position-relative">
+                                    <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100px; width: 100%; object-fit: cover;">
+                                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeFoto(${index})">
+                                        <i class="bx bx-x"></i>
+                                    </button>
+                                </div>
+                            `;
+                            fotoPreview.appendChild(col);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            });
+
+            // Fungsi untuk menghapus foto
+            window.removeFoto = function(index) {
+                const dt = new DataTransfer();
+                const files = Array.from(fotoInput.files);
+                files.splice(index, 1);
+                
+                files.forEach(file => {
+                    dt.items.add(file);
+                });
+                
+                fotoInput.files = dt.files;
+                
+                // Trigger ulang preview
+                const event = new Event('change', { bubbles: true });
+                fotoInput.dispatchEvent(event);
+            };
+
             // ====== Mapping Serve Days ======
             const serveDaysFor = (n) => {
                 n = parseInt(n, 10);

@@ -7,6 +7,7 @@ use App\Models\MenuMakanan;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
 use App\Services\MidtransService;
+use App\Services\PdfService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
@@ -98,7 +99,7 @@ class OrderController extends Controller
         })->toArray();
 
         $menusBatchI = MenuMakanan::where('batch', 'I')
-            ->get(['id', 'nama_menu', 'serve_days', 'spec_menu'])
+            ->get(['id', 'nama_menu', 'serve_days', 'spec_menu', 'foto_makanan'])
             ->map(function ($m) {
                 $serve = is_array($m->serve_days) ? $m->serve_days : [];
                 $serve = array_values(array_filter(array_map(fn($v) => (int) $v, $serve), fn($n) => $n >= 1 && $n <= 31));
@@ -108,12 +109,19 @@ class OrderController extends Controller
                     'nama_menu'  => $m->nama_menu,
                     'serve_days' => $serve,                  // <- array angka siap pakai
                     'spec_menu'  => $m->spec_menu ?? [],     // <- array asosiatif (section => [items])
+                    'foto_makanan' => $m->foto_makanan ?? [], // <- array foto paths
                 ];
             })
             ->values()
             ->toArray();
 
-        return view('customers.orders.create', compact('packages', 'packagesMap', 'menusBatchI'));
+        // Handle preselected package dari tombol pesan ulang
+        $preselectedPackage = null;
+        if (request()->has('package_key')) {
+            $preselectedPackage = request('package_key');
+        }
+
+        return view('customers.orders.create', compact('packages', 'packagesMap', 'menusBatchI', 'preselectedPackage'));
     }
 
     // public function create()
@@ -149,6 +157,9 @@ class OrderController extends Controller
             'service_dates'      => ['nullable'],
             'unique_menus'       => ['nullable'],
             'unique_menu_count'  => ['nullable', 'integer', 'min:0'],
+            
+            // catatan khusus untuk paket personal
+            'notes'              => ['nullable', 'string', 'max:500'],
         ]);
 
         // AMBIL DARI DB (bukan dari $this->packages)
@@ -211,6 +222,7 @@ class OrderController extends Controller
             'service_dates'      => $serviceDates,
             'unique_menus'       => $uniqueMenus,
             'unique_menu_count'  => $uniqueMenuCount,
+            'notes'              => $data['notes'] ?? null,
         ];
 
         $json = json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
@@ -244,6 +256,7 @@ class OrderController extends Controller
             'unique_menus'       => ['nullable'],
             'unique_menu_count'  => ['nullable', 'integer', 'min:0'],
             'meta'               => ['nullable'],
+            'notes'              => ['nullable', 'string', 'max:500'],
         ]);
 
         // --- normalisasi incoming JSON string → array ---
@@ -327,6 +340,7 @@ class OrderController extends Controller
             'payment_method'    => $data['payment_method'],
             'status'            => 'UNPAID',
             'meta'              => $meta,
+            'notes'             => $data['notes'] ?? null,
         ]);
 
         // --- alur redirect sama seperti sebelumnya ---
@@ -338,9 +352,33 @@ class OrderController extends Controller
 
     public function pay(Order $order, MidtransService $svc)
     {
-        // attempt & midtrans order id
-        $attempt = $order->paymentTransactions()->count() + 1;
-        $midtransOrderId = "{$order->order_number}-{$attempt}";
+        // Cek apakah ada transaksi pending yang masih bisa digunakan
+        $existingTransaction = $order->paymentTransactions()
+            ->where('transaction_status', 'pending')
+            ->latest()
+            ->first();
+
+        // Logic untuk menentukan apakah akan menggunakan transaksi yang ada
+        $useExisting = false;
+        
+        if ($existingTransaction) {
+            // Cek apakah transaksi sudah expired (lebih dari 1 jam yang lalu)
+            $transactionAge = now()->diffInMinutes($existingTransaction->created_at);
+            
+            // JANGAN reuse transaksi yang ada untuk menghindari timer Midtrans yang lama
+            // SELALU buat transaksi baru agar timer Midtrans fresh
+            Log::info('[Payment] Will create new transaction to avoid Midtrans timer issues', [
+                'order_id' => $order->id,
+                'existing_transaction_id' => $existingTransaction->id,
+                'age_minutes' => $transactionAge,
+                'reason' => 'Always create new to reset Midtrans timer'
+            ]);
+        } else {
+            Log::info('[Payment] No existing pending transaction', [
+                'order_id' => $order->id,
+                'will_create_new' => true
+            ]);
+        }
 
         // ====== Ringkasan Step 3 (diringkas ke custom_field*) ======
         $periodText = ($order->start_date && $order->end_date)
@@ -368,6 +406,24 @@ class OrderController extends Controller
 
         $gross = (int) ($order->amount_total ?? $order->package_price);
 
+        // Tentukan apakah ini retry (untuk expiry time)
+        $isRetry = $order->status === 'EXPIRED';
+
+        // Set expiry time: 5 menit untuk retry, 1 menit untuk pembayaran baru
+        $expiryMinutes = $isRetry ? 5 : 1;
+
+        // SELALU buat transaksi baru untuk menghindari timer Midtrans yang lama
+        $attempt = $order->paymentTransactions()->count() + 1;
+        $midtransOrderId = "{$order->order_number}-{$attempt}";
+        
+        Log::info('[Payment] Creating new transaction with fresh order_id', [
+            'order_id' => $order->id,
+            'midtrans_order_id' => $midtransOrderId,
+            'attempt' => $attempt,
+            'expiry_minutes' => $expiryMinutes
+        ]);
+        
+        // Generate token baru
         $params = [
             'transaction_details' => [
                 'order_id'       => $midtransOrderId,
@@ -392,10 +448,6 @@ class OrderController extends Controller
             'customer_details' => [
                 'first_name' => optional(Auth::user())->name ?? 'Guest',
                 'email'      => optional(Auth::user())->email ?? 'user@example.com',
-                // (opsional) kalau punya phone/address, bisa tambahkan:
-                // 'phone' => $order->meta['phone'] ?? null,
-                // 'billing_address' => [...],
-                // 'shipping_address' => [...],
             ],
 
             // payment channels
@@ -415,13 +467,22 @@ class OrderController extends Controller
             ],
             'expiry' => [
                 'unit'     => 'minutes',
-                'duration' => 1,
+                'duration' => $expiryMinutes,
             ],
         ];
-
+        
         $token = Snap::getSnapToken($params);
+        
+        Log::info('[Payment] Fresh token generated successfully', [
+            'midtrans_order_id' => $midtransOrderId
+        ]);
 
-        // log attempt pending
+        // Reset status ke UNPAID jika ini retry dari EXPIRED
+        if ($isRetry && $order->status === 'EXPIRED') {
+            $order->update(['status' => 'UNPAID']);
+        }
+
+        // Buat transaksi baru
         $order->paymentTransactions()->create([
             'midtrans_order_id'   => $midtransOrderId,
             'attempt'             => $attempt,
@@ -434,15 +495,159 @@ class OrderController extends Controller
             'snapToken' => $token,
             'attempt'   => $attempt,
             'clientKey' => config('services.midtrans.client_key'),
+            'isRetry'   => $isRetry, // tambahkan flag untuk view
         ]);
     }
 
 
-    /** Halaman selesai (UX). Status final tetap percaya webhook. */
+    /** Halaman selesai (UX). Cek status real-time dari Midtrans */
     public function finish(Order $order)
     {
-        // Tampilkan ringkasan + status terkini dari DB
+        // Jika order masih UNPAID atau EXPIRED, cek status real-time dari Midtrans
+        if (in_array($order->status, ['UNPAID', 'EXPIRED']) && $order->payment_method === 'transfer') {
+            try {
+                // Ambil transaksi terakhir
+                $lastTransaction = $order->paymentTransactions()
+                    ->where('transaction_status', 'pending')
+                    ->latest()
+                    ->first();
+
+                if ($lastTransaction) {
+                    // Cek status ke Midtrans API
+                    $status = \Midtrans\Transaction::status($lastTransaction->midtrans_order_id);
+                    
+                    if ($status && isset($status->transaction_status)) {
+                        $transactionStatus = $status->transaction_status;
+                        $grossAmount = (int) ($status->gross_amount ?? 0);
+                        
+                        // Log untuk debugging
+                        Log::info('[Real-time Check] Status from Midtrans', [
+                            'order_id' => $order->id,
+                            'midtrans_order_id' => $lastTransaction->midtrans_order_id,
+                            'status' => $transactionStatus,
+                            'current_db_status' => $order->status
+                        ]);
+
+                        // Update status jika ada perubahan
+                        if ($transactionStatus === 'settlement' || $transactionStatus === 'capture') {
+                            $order->update([
+                                'status' => 'PAID',
+                                'paid_at' => now(),
+                            ]);
+                            
+                            // Update transaction record
+                            $lastTransaction->update([
+                                'transaction_status' => $transactionStatus,
+                                'settled_at' => now(),
+                            ]);
+                            
+                            Log::info('[Real-time Check] Order updated to PAID', [
+                                'order_id' => $order->id,
+                                'midtrans_order_id' => $lastTransaction->midtrans_order_id
+                            ]);
+                        } elseif ($transactionStatus === 'expire') {
+                            $order->update(['status' => 'EXPIRED']);
+                            $lastTransaction->update(['transaction_status' => 'expire']);
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Log error tapi tidak break flow
+                Log::warning('[Real-time Check] Failed to check Midtrans status', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        // Tampilkan ringkasan + status terkini dari DB (sudah diupdate jika perlu)
         return view('customers.orders.finish', compact('order'));
+    }
+
+    /** AJAX endpoint untuk cek status pembayaran real-time */
+    public function checkPaymentStatus(Order $order)
+    {
+        // Hanya untuk order dengan metode transfer yang masih UNPAID/EXPIRED
+        if (!in_array($order->status, ['UNPAID', 'EXPIRED']) || $order->payment_method !== 'transfer') {
+            return response()->json([
+                'status' => $order->status,
+                'message' => 'Order tidak memerlukan pengecekan status'
+            ]);
+        }
+
+        try {
+            // Ambil transaksi terakhir
+            $lastTransaction = $order->paymentTransactions()
+                ->where('transaction_status', 'pending')
+                ->latest()
+                ->first();
+
+            if (!$lastTransaction) {
+                return response()->json([
+                    'status' => $order->status,
+                    'message' => 'Tidak ada transaksi pending'
+                ]);
+            }
+
+            // Cek status ke Midtrans API
+            $status = \Midtrans\Transaction::status($lastTransaction->midtrans_order_id);
+            
+            if ($status && isset($status->transaction_status)) {
+                $transactionStatus = $status->transaction_status;
+                $statusChanged = false;
+                $message = 'Status tidak berubah';
+
+                // Update status jika ada perubahan
+                if ($transactionStatus === 'settlement' || $transactionStatus === 'capture') {
+                    if ($order->status !== 'PAID') {
+                        $order->update([
+                            'status' => 'PAID',
+                            'paid_at' => now(),
+                        ]);
+                        
+                        $lastTransaction->update([
+                            'transaction_status' => $transactionStatus,
+                            'settled_at' => now(),
+                        ]);
+                        
+                        $statusChanged = true;
+                        $message = 'Pembayaran berhasil! Order sudah dibayar.';
+                    }
+                } elseif ($transactionStatus === 'expire') {
+                    if ($order->status !== 'EXPIRED') {
+                        $order->update(['status' => 'EXPIRED']);
+                        $lastTransaction->update(['transaction_status' => 'expire']);
+                        
+                        $statusChanged = true;
+                        $message = 'Pembayaran kadaluarsa.';
+                    }
+                }
+
+                return response()->json([
+                    'status' => $order->status,
+                    'midtrans_status' => $transactionStatus,
+                    'status_changed' => $statusChanged,
+                    'message' => $message,
+                    'paid_at' => $order->paid_at?->toISOString()
+                ]);
+            }
+
+            return response()->json([
+                'status' => $order->status,
+                'message' => 'Tidak bisa mendapatkan status dari Midtrans'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::warning('[AJAX Check] Failed to check Midtrans status', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'status' => $order->status,
+                'message' => 'Gagal mengecek status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /** Webhook Midtrans (notifikasi server → sumber status final) */
@@ -769,6 +974,27 @@ class OrderController extends Controller
         ]);
 
         return view('admin.orders.show', compact('order'));
+    }
+
+    /** Generate PDF untuk detail order */
+    public function generatePdf(Order $order, PdfService $pdfService)
+    {
+        // Pastikan user hanya bisa ases order miliknya sendiri (customer)
+        if (Auth::user()->role === 'customer' && $order->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        try {
+            // Generate PDF receipt yang compact
+            return $pdfService->downloadOrderReceipt($order);
+        } catch (\Exception $e) {
+            Log::error('PDF generation failed', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 
     

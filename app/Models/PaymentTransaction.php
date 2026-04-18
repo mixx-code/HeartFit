@@ -14,6 +14,7 @@ class PaymentTransaction extends Model
         'attempt',
         'payment_type',
         'transaction_status',
+        'snap_token',
         'fraud_status',
         'gross_amount',
         'extra',

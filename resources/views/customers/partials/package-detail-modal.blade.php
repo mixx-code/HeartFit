@@ -164,9 +164,19 @@ $durations = [
         font-size: 0.9rem;
         color: #475569;
     }
+
+    /* Animasi untuk modal utama */
+    #packageDetailModal {
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+    
+    #packageDetailModal.show {
+        opacity: 1;
+    }
 </style>
 
-<div class="modal fade" id="packageDetailModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+<div class="modal fade d-none" id="packageDetailModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
             
@@ -183,7 +193,7 @@ $durations = [
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <div class="modal-body p-4 p-lg-5">
+            <div class="modal-body p-4 p-lg-5" id="modalBody">
                 <div class="row">
                     <div class="col-md-5 border-end">
                         <div class="mb-4">
@@ -248,8 +258,13 @@ const PACKAGE_DATA = @json($modalData);
 const PACKAGE_CONFIG = @json($packageConfig);
 
 function openPackageModal(packageKey) {
+    console.log('Opening package modal for:', packageKey);
+    
     const data   = PACKAGE_DATA[packageKey];
     const config = PACKAGE_CONFIG[packageKey];
+
+    console.log('Package data:', data);
+    console.log('Package config:', config);
 
     if (!data || !config) return;
 
@@ -270,11 +285,61 @@ function openPackageModal(packageKey) {
     const menusEl = document.getElementById('modalMenus');
     const menus = data.menus.length > 0 ? data.menus : [];
     
+    console.log('Modal menus data:', menus);
+    console.log('First menu with photos:', menus[0]);
+    
     let menuHtml = '';
     
     if (menus.length > 0) {
         menuHtml = menus.map((menu, i) => {
+            console.log(`Menu ${i}:`, {
+                nama_menu: menu.nama_menu,
+                foto_makanan: menu.foto_makanan,
+                has_fotos: menu.foto_makanan && menu.foto_makanan.length > 0
+            });
+            
             let detailHtml = '';
+            let fotoHtml = '';
+            
+            // Tambahkan foto menu jika ada
+            if (menu.foto_makanan && menu.foto_makanan.length > 0) {
+                fotoHtml = `
+                    <div class="mb-3">
+                        <h6 class="mb-2 d-flex align-items-center gap-2">
+                            <i class="bx bx-image text-primary"></i>
+                            <span>Foto Menu</span>
+                        </h6>
+                        <div class="row g-2">
+                            ${menu.foto_makanan.map((foto, index) => `
+                                <div class="col-md-4 col-6">
+                                    <div class="card border-0 shadow-sm overflow-hidden">
+                                        <div class="position-relative" style="height: 120px;">
+                                            <img src="/storage/${foto}" 
+                                                 class="w-100 h-100" 
+                                                 style="object-fit: cover; transition: transform 0.3s ease;"
+                                                 onmouseover="this.style.transform='scale(1.05)'"
+                                                 onmouseout="this.style.transform='scale(1)'"
+                                                 onclick="window.open('/storage/${foto}', '_blank')"
+                                                 alt="Foto menu ${index + 1}">
+                                            <div class="position-absolute top-0 end-0 m-2">
+                                                <span class="badge bg-dark bg-opacity-75 text-white">
+                                                    <i class="bx bx-expand fs-6"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="card-body p-2 text-center">
+                                            <small class="text-muted">Foto ${index + 1}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                console.log(`Menu ${i} has no photos`);
+            }
+            
             if (menu.spec_menu) {
                 Object.entries(menu.spec_menu).forEach(([kategori, makananList]) => {
                     detailHtml += `
@@ -299,6 +364,7 @@ function openPackageModal(packageKey) {
                         </div>
                         <h6 class="fw-bold mb-0">${menu.nama_menu}</h6>
                     </div>
+                    ${fotoHtml}
                     ${detailHtml}
                 </div>
             `;
@@ -310,7 +376,17 @@ function openPackageModal(packageKey) {
     menusEl.innerHTML = menuHtml;
 
     // Show Modal
-    const modal = new bootstrap.Modal(document.getElementById('packageDetailModal'));
+    const modalElement = document.getElementById('packageDetailModal');
+    
+    // Hapus class d-none dan tampilkan dengan animasi
+    setTimeout(() => {
+        modalElement.classList.remove('d-none');
+        setTimeout(() => {
+            modalElement.classList.add('show');
+        }, 50);
+    }, 100);
+    
+    const modal = new bootstrap.Modal(modalElement);
     modal.show();
 }
 </script>

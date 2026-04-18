@@ -250,6 +250,30 @@
                 </div>
             </div>
             @endif
+
+            <!-- Catatan Khusus (Hanya untuk paket personal) -->
+            @if(!empty($order->notes) && strcasecmp($order->package_category ?? '', 'personal') === 0)
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h6 class="mb-3">
+                        <i class="bx bx-comment-dots me-2"></i>Catatan Khusus Customer
+                        <small class="text-muted">(Paket Personal)</small>
+                    </h6>
+                    <div class="alert alert-info">
+                        <div class="d-flex align-items-start">
+                            <i class="bx bx-info-circle me-2 mt-1"></i>
+                            <div>
+                                <p class="mb-0">{{ $order->notes }}</p>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bx bx-time-five me-1"></i>
+                                    Ditambahkan pada: {{ $order->updated_at ? $order->updated_at->format('d M Y H:i') : $order->created_at->format('d M Y H:i') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>

@@ -17,6 +17,7 @@ class MenuMakanan extends Model
         'batch',
         'serve_days',
         'spec_menu',
+        'foto_makanan',
         'created_by',
         'updated_by',   // tambahkan ini
         'deleted_by',   // tambahkan ini juga
@@ -25,6 +26,7 @@ class MenuMakanan extends Model
     protected $casts = [
         'serve_days' => 'array',
         'spec_menu'  => 'array',
+        'foto_makanan' => 'array',
     ];
 
     // Relasi user tracking

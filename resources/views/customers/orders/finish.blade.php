@@ -55,19 +55,65 @@
           <div class="mt-1 small mb-0 text-success-700">Dibayar pada: <strong>{{ \Carbon\Carbon::parse($order->paid_at)->toDateTimeString() }}</strong></div>
         @endif
       </div>
+    @elseif($order->status === 'UNPAID' && $order->payment_method === 'transfer')
+      <div class="alert alert-info mx-auto" style="max-width:640px;">
+        <div class="d-flex align-items-center justify-content-between">
+          <div>
+            <strong>Menunggu pembayaran</strong>. Halaman ini akan otomatis diperbarui setelah pembayaran berhasil.
+            <div class="small text-muted mt-1">
+              <i class="bx bx-time me-1"></i>Auto-check setiap 5 detik (maksimal 5 menit)
+            </div>
+          </div>
+          <button onclick="manualCheck()" class="btn btn-sm btn-outline-info">
+            <i class="bx bx-refresh me-1"></i>Cek Sekarang
+          </button>
+        </div>
+      </div>
+    @elseif($order->status === 'EXPIRED')
+      <div class="alert alert-warning mx-auto" style="max-width:640px;">
+        <div class="d-flex align-items-center">
+          <i class="bx bx-error-circle me-2 fs-5"></i>
+          <div>
+            <strong>Pembayaran expired</strong>. Anda memiliki dua pilihan:
+            <ul class="mb-0 mt-2 small">
+              <li><strong>Bayar Ulang</strong> - Lanjutkan pembayaran order yang sama (waktu: 5 menit)</li>
+              <li><strong>Pesan Ulang</strong> - Buat order baru dengan paket yang sama</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     @elseif(($order->payment_method ?? '') === 'cod')
       <div class="alert alert-info mx-auto" style="max-width:640px;">
         Metode <strong>COD</strong> dipilih. Silakan siapkan pembayaran saat pesanan diantar.
       </div>
     @else
       <div class="alert alert-warning mx-auto" style="max-width:640px;">
-        Status saat ini: <strong>{{ $order->status }}</strong>. Jika Anda sudah membayar, halaman ini akan diperbarui setelah notifikasi diterima.
+        Status saat ini: <strong>{{ $order->status }}</strong>. 
+        @if($order->payment_method === 'transfer')
+          Halaman ini akan otomatis diperbarui setelah pembayaran berhasil.
+          <button onclick="manualCheck()" class="btn btn-sm btn-outline-warning ms-2">
+            <i class="bx bx-refresh me-1"></i>Cek Status
+          </button>
+        @else
+          Jika Anda sudah membayar, halaman ini akan diperbarui setelah notifikasi diterima.
+        @endif
       </div>
     @endif
 
     <div class="text-center">
-      <a href="{{ route('orders.create') }}" class="btn btn-primary mt-2">Pesan Lagi</a>
-      <a href="{{ route('customer.orders.index') }}" class="btn btn-outline-secondary mt-2">Liat Orderan Kamu</a>
+      @if($order->status === 'EXPIRED')
+        {{-- Bayar Ulang untuk transfer --}}
+        @if($order->payment_method === 'transfer')
+          <a href="{{ route('orders.pay', $order) }}" class="btn btn-success mt-2">
+            <i class="bx bx-time me-1"></i>Bayar Ulang (5 Menit)
+          </a>
+        @endif
+        <a href="{{ route('orders.create') }}?package_key={{ $order->package_key }}" class="btn btn-warning mt-2">
+          <i class="bx bx-refresh me-1"></i>Pesan Ulang Paket
+        </a>
+      @endif
+      <a href="{{ route('orders.create') }}" class="btn btn-primary mt-2">Pesan Paket Lain</a>
+      <a href="{{ route('customer.orders.index') }}" class="btn btn-outline-secondary mt-2">Lihat Orderan Kamu</a>
     </div>
 
     {{-- Ringkasan --}}
@@ -110,9 +156,80 @@
             <span class="badge {{ $statusBadge }}">{{ $order->status }}</span>
           </div>
         </div>
+
+        @if(!empty($order->notes) && strcasecmp($order->package_category ?? '', 'personal') === 0)
+          <div class="kv-row d-flex align-items-start py-2">
+            <div class="kv-label">Catatan</div>
+            <div class="kv-value">
+              <div class="alert alert-info small mb-0">
+                <i class="bx bx-info-circle me-1"></i>
+                {{ $order->notes }}
+              </div>
+            </div>
+          </div>
+        @endif
       </div>
     </div>
 
   </div>
 </div>
+
+{{-- Auto-refresh status untuk pembayaran --}}
+@if(in_array($order->status, ['UNPAID', 'EXPIRED']) && $order->payment_method === 'transfer')
+@push('scripts')
+<script>
+// Auto-check payment status every 5 seconds
+let checkInterval;
+let isChecking = false;
+
+async function checkPaymentStatus() {
+    if (isChecking) return;
+    isChecking = true;
+    
+    try {
+        const response = await fetch(`{{ route('orders.check-payment', $order) }}`);
+        const data = await response.json();
+        
+        console.log('Payment status check:', data);
+        
+        if (data.status_changed) {
+            // Status berubah, reload page untuk update UI
+            clearInterval(checkInterval);
+            
+            // Tampilkan notifikasi
+            if (data.status === 'PAID') {
+                alert('✅ ' + data.message);
+            } else if (data.status === 'EXPIRED') {
+                alert('⏰ ' + data.message);
+            }
+            
+            // Reload page
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error('Error checking payment status:', error);
+    } finally {
+        isChecking = false;
+    }
+}
+
+// Mulai auto-check
+document.addEventListener('DOMContentLoaded', function() {
+    // Check setiap 5 detik
+    checkInterval = setInterval(checkPaymentStatus, 5000);
+    
+    // Stop checking setelah 5 menit (300 detik)
+    setTimeout(() => {
+        clearInterval(checkInterval);
+        console.log('Auto-check stopped after 5 minutes');
+    }, 300000);
+});
+
+// Manual check button (opsional)
+function manualCheck() {
+    checkPaymentStatus();
+}
+</script>
+@endpush
+@endif
 @endsection

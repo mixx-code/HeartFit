@@ -2,6 +2,31 @@
 @section('title', 'Bayar Pesanan')
 
 @section('content')
+    {{-- Notifikasi Pembayaran --}}
+    @if(isset($isRetry) && $isRetry)
+        @if($order->status === 'EXPIRED')
+            <div class="alert alert-warning border-0 shadow-sm mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bx bx-time-five me-3 fs-4"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Pembayaran Ulang</h6>
+                        <small class="text-muted">Anda memiliki <strong>5 menit</strong> untuk menyelesaikan pembayaran ulang order ini.</small>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="alert alert-info border-0 shadow-sm mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="bx bx-time me-3 fs-4"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Melanjutkan Pembayaran</h6>
+                        <small class="text-muted">Anda melanjutkan pembayaran yang sudah ada. Silakan selesaikan pembayaran ini.</small>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endif
+
     @push('styles')
         <style>
             /* Card detail yang rapi */
@@ -196,6 +221,77 @@
     <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ $clientKey }}"></script>
     <script>
         const CSRF = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        
+        // Timer countdown configuration
+        const EXPIRY_MINUTES = {{ $isRetry ? 5 : 1 }}; // 5 menit untuk retry, 1 menit untuk baru
+        let countdownInterval;
+        let timeRemaining = EXPIRY_MINUTES * 60; // dalam detik
+
+        /* =========================
+           Timer Functions
+        ========================= */
+        function startCountdown() {
+            // Reset timer ke awal
+            timeRemaining = EXPIRY_MINUTES * 60;
+            
+            // Clear existing interval
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            // Update display immediately
+            updateTimerDisplay();
+            
+            // Start countdown
+            countdownInterval = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(countdownInterval);
+                    handleExpired();
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            const timerElement = document.getElementById('payment-timer');
+            if (timerElement) {
+                timerElement.textContent = display;
+                
+                // Change color saat waktu tinggal sedikit
+                if (timeRemaining <= 60) {
+                    timerElement.className = 'text-danger fw-bold';
+                } else if (timeRemaining <= 180) {
+                    timerElement.className = 'text-warning fw-bold';
+                } else {
+                    timerElement.className = 'text-success fw-bold';
+                }
+            }
+        }
+        
+        function addTimerToPage() {
+            // Cek apakah timer sudah ada
+            if (document.getElementById('payment-timer-container')) {
+                return;
+            }
+            
+            // Tambah timer ke notifikasi
+            const alertElement = document.querySelector('.alert');
+            if (alertElement) {
+                const timerHtml = `
+                    <div class="mt-2 text-center">
+                        <small class="text-muted">Sisa waktu pembayaran: </small>
+                        <span id="payment-timer" class="fw-bold text-success">00:00</span>
+                    </div>
+                `;
+                alertElement.insertAdjacentHTML('beforeend', timerHtml);
+            }
+        }
 
         /* =========================
            Helpers
@@ -330,6 +426,24 @@
                     });
                     // (opsional) bisa lakukan apa-apa di sini; umumnya tidak direfresh
                 }
+            });
+        });
+        
+        /* =========================
+           Initialize Timer on Page Load
+        ========================= */
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tambah timer ke halaman
+            addTimerToPage();
+            
+            // Mulai countdown
+            startCountdown();
+            
+            // Log untuk debugging
+            console.log('Payment timer initialized:', {
+                expiry_minutes: EXPIRY_MINUTES,
+                is_retry: {{ $isRetry ? 'true' : 'false' }},
+                attempt: {{ $attempt }}
             });
         });
     </script>

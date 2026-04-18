@@ -56,6 +56,7 @@
             @php
               $total = $o->amount_total ?? $o->package_price;
               $isUnpaid = $o->status === 'UNPAID';
+              $isExpired = $o->status === 'EXPIRED';
             @endphp
             <tr>
               <td class="fw-semibold">{{ $o->order_number }}</td>
@@ -89,6 +90,14 @@
               </td>
               <td>
                 <div class="d-flex gap-1">
+                  {{-- Cetak/Print --}}
+                  <a href="{{ route('orders.generate-pdf', $o) }}" 
+                     target="_blank" 
+                     class="btn btn-sm btn-outline-info" 
+                     title="Cetak Struk Order">
+                    <i class="bx bx-receipt me-1"></i>Cetak Struk
+                  </a>
+                  
                   {{-- Lihat ringkasan/hasil --}}
                   <a href="{{ route('orders.finish', $o) }}" class="btn btn-sm btn-outline-secondary">Detail</a>
 
@@ -99,6 +108,23 @@
                     @else
                       <a href="{{ route('orders.pay', $o) }}" class="btn btn-sm btn-primary">Bayar</a>
                     @endif
+                  @endif
+
+                  {{-- Action khusus EXPIRED --}}
+                  @if($isExpired)
+                    {{-- Bayar Ulang untuk transfer --}}
+                    @if($o->payment_method === 'transfer')
+                      <a href="{{ route('orders.pay', $o) }}" 
+                         class="btn btn-sm btn-success" 
+                         title="Bayar ulang (5 menit)">
+                        <i class="bx bx-time me-1"></i>Bayar Ulang
+                      </a>
+                    @endif
+                    <a href="{{ route('orders.create') }}?package_key={{ $o->package_key }}" 
+                       class="btn btn-sm btn-warning" 
+                       title="Pesan ulang paket yang sama">
+                      <i class="bx bx-refresh me-1"></i>Pesan Ulang
+                    </a>
                   @endif
                 </div>
               </td>

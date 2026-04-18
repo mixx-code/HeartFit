@@ -68,6 +68,16 @@
 
             <dt class="col-sm-4">Metode Bayar</dt>
             <dd class="col-sm-8">{{ strtoupper(str_replace('_',' ',$summary['payment_method'])) }}</dd>
+
+            @if(!empty($summary['notes']) && strcasecmp($summary['package_category'] ?? '', 'personal') === 0)
+              <dt class="col-sm-4">Catatan</dt>
+              <dd class="col-sm-8">
+                <div class="alert alert-info small mb-0">
+                  <i class="bx bx-info-circle me-1"></i>
+                  {{ $summary['notes'] }}
+                </div>
+              </dd>
+            @endif
           </dl>
         </div>
       </div>
@@ -95,6 +105,7 @@
   <input type="hidden" name="service_dates"     value='@json($summary["service_dates"])'>
   <input type="hidden" name="unique_menus"      value='@json($summary["unique_menus"])'>
   <input type="hidden" name="unique_menu_count" value="{{ $summary['unique_menu_count'] }}">
+  <input type="hidden" name="notes"             value="{{ $summary['notes'] ?? '' }}">
 
           <button type="submit" class="btn btn-success">
             Pesan
