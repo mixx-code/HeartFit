@@ -89,11 +89,11 @@ class DashboardAdminController extends Controller
         if ($exitCode === 0) {
             return redirect()
                 ->route('dashboard.admin', ['date' => $date])
-                ->with('success', "Generate delivery berhasil. {$output}");
+                ->with('success', "Generate delivery berhasil");
         }
 
         return redirect()
             ->route('dashboard.admin', ['date' => $date])
-            ->with('error', "Generate delivery gagal. {$output}");
+            ->with('error', "Generate delivery gagal");
     }
 }

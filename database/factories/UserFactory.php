@@ -27,8 +27,8 @@ class UserFactory extends Factory
     {
         return $this->state(fn() => [
             'role' => 'admin',
-            'email' => 'admin@example.com',
-            'password' => Hash::make('admin123'),
+            'email' => 'admin@mail.com',
+            'password' => Hash::make('password123'),
         ]);
     }
 
@@ -36,8 +36,8 @@ class UserFactory extends Factory
     {
         return $this->state(fn() => [
             'role' => 'superadmin',
-            'email' => 'superadmin@example.com',
-            'password' => Hash::make('superadmin123'),
+            'email' => 'superadmin@mail.com',
+            'password' => Hash::make('password123'),
         ]);
     }
 }
