@@ -21,7 +21,7 @@
           <div class="input-group" style="min-width: 280px;">
             <span class="input-group-text"><i class="bx bx-search"></i></span>
             <input type="search" name="q" value="{{ request('q') }}" class="form-control"
-                   placeholder="Cari jenis paket / batch ...">
+                   placeholder="Cari nama paket / batch / jenis ...">
           </div>
           <div class="input-group" style="max-width: 160px;">
             <span class="input-group-text">Rows</span>

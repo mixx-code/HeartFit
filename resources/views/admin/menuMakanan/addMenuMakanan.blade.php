@@ -47,12 +47,22 @@
                             <label class="form-label" for="foto_makanan">
                                 <i class="bx bx-image"></i> Foto Makanan
                             </label>
-                            <input type="file" id="foto_makanan" name="foto_makanan[]" class="form-control" 
-                                accept="image/jpeg,image/jpg,image/png" multiple>
+                            <input type="file" id="foto_makanan" name="foto_makanan_single" class="form-control" 
+                                accept="image/jpeg,image/jpg,image/png">
                             <small class="text-muted d-block mt-1">
-                                Upload foto menu (jpeg, jpg, png). Maksimal 5 foto, 2MB per foto.
+                                Upload foto menu (jpeg, jpg, png). Maksimal 5 foto, 2MB per foto. Klik "Tambah Foto" untuk upload bertahap.
                             </small>
-                            <div id="fotoPreview" class="mt-2 row g-2"></div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addFoto()">
+                                <i class="bx bx-plus"></i> Tambah Foto
+                            </button>
+                            
+                            <div class="mt-3">
+                                <p class="text-muted small mb-2">Foto yang akan diupload:</p>
+                                <div id="fotoPreview" class="row g-2"></div>
+                            </div>
+                            
+                            <!-- Hidden fields untuk menyimpan foto -->
+                            <div id="hiddenFotoContainer"></div>
                         </div>
 
                         {{-- Preview Serve Days --}}
@@ -120,51 +130,110 @@
 @push('scripts')
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // ====== Foto Preview ======
+            // ====== Foto Upload Bertahap ======
+            let uploadedFiles = []; // Array untuk menyimpan file yang sudah diupload
             const fotoInput = document.getElementById('foto_makanan');
             const fotoPreview = document.getElementById('fotoPreview');
-
-            fotoInput.addEventListener('change', function(e) {
-                fotoPreview.innerHTML = '';
-                const files = Array.from(e.target.files).slice(0, 5); // Maksimal 5 foto
-
-                files.forEach((file, index) => {
-                    if (file.type.startsWith('image/')) {
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            const col = document.createElement('div');
-                            col.className = 'col-3';
-                            col.innerHTML = `
-                                <div class="position-relative">
-                                    <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100px; width: 100%; object-fit: cover;">
-                                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeFoto(${index})">
-                                        <i class="bx bx-x"></i>
-                                    </button>
-                                </div>
-                            `;
-                            fotoPreview.appendChild(col);
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            });
-
-            // Fungsi untuk menghapus foto
-            window.removeFoto = function(index) {
-                const dt = new DataTransfer();
-                const files = Array.from(fotoInput.files);
-                files.splice(index, 1);
+            const hiddenContainer = document.getElementById('hiddenFotoContainer');
+            
+            // Fungsi untuk menambah foto
+            window.addFoto = function() {
+                if (!fotoInput.files || fotoInput.files.length === 0) {
+                    alert('Pilih foto terlebih dahulu');
+                    return;
+                }
                 
-                files.forEach(file => {
-                    dt.items.add(file);
-                });
+                const file = fotoInput.files[0];
                 
-                fotoInput.files = dt.files;
+                if (uploadedFiles.length >= 5) {
+                    alert('Maksimal 5 foto');
+                    return;
+                }
                 
-                // Trigger ulang preview
-                const event = new Event('change', { bubbles: true });
-                fotoInput.dispatchEvent(event);
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Tambah ke array
+                        uploadedFiles.push(file);
+                        
+                        // Tambah preview
+                        const col = document.createElement('div');
+                        col.className = 'col-3';
+                        col.setAttribute('data-foto-index', uploadedFiles.length - 1);
+                        col.innerHTML = `
+                            <div class="position-relative">
+                                <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100px; width: 100%; object-fit: cover;">
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeNewFoto(${uploadedFiles.length - 1})">
+                                    <i class="bx bx-x"></i>
+                                </button>
+                            </div>
+                        `;
+                        fotoPreview.appendChild(col);
+                        
+                        // Tambah hidden field
+                        addHiddenField(file, uploadedFiles.length - 1);
+                        
+                        // Reset input
+                        fotoInput.value = '';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('File harus berupa gambar');
+                }
             };
+            
+            // Fungsi untuk menghapus foto
+            window.removeNewFoto = function(index) {
+                // Hapus dari array
+                uploadedFiles.splice(index, 1);
+                
+                // Hapus preview
+                const element = document.querySelector(`#fotoPreview [data-foto-index="${index}"]`);
+                if (element) element.remove();
+                
+                // Rebuild hidden fields
+                rebuildHiddenFields();
+            };
+            
+            // Fungsi untuk menambah hidden field
+            function addHiddenField(file, index) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'file';
+                hiddenInput.name = `foto_makanan[${index}]`;
+                hiddenInput.style.display = 'none';
+                
+                // Buat DataTransfer untuk menyimpan file
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                hiddenInput.files = dt.files;
+                
+                hiddenContainer.appendChild(hiddenInput);
+            }
+            
+            // Fungsi untuk rebuild hidden fields
+            function rebuildHiddenFields() {
+                hiddenContainer.innerHTML = '';
+                uploadedFiles.forEach((file, index) => {
+                    addHiddenField(file, index);
+                });
+                
+                // Update index di preview
+                const previews = fotoPreview.querySelectorAll('[data-foto-index]');
+                previews.forEach((element, index) => {
+                    element.setAttribute('data-foto-index', index);
+                    const button = element.querySelector('button');
+                    button.setAttribute('onclick', `removeNewFoto(${index})`);
+                });
+            }
+            
+            // Validasi saat submit
+            document.querySelector('form').addEventListener('submit', function(e) {
+                if (uploadedFiles.length > 5) {
+                    e.preventDefault();
+                    alert('Maksimal 5 foto');
+                    return false;
+                }
+            });
 
             // ====== Mapping Serve Days ======
             const serveDaysFor = (n) => {

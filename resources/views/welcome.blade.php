@@ -394,7 +394,7 @@
                     <i class="bi bi-heart-fill text-primary"></i>
                     <span class="fw-semibold">HeartFit</span>
                 </div>
-                <div class="small text-secondary">© 2025 HeartFit. Semua hak dilindungi.</div>
+                <div class="small text-secondary">© 2026 DIO | HEARTFIT</div>
             </div>
         </div>
     </footer>

@@ -997,5 +997,44 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * Hapus order dan semua data terkait (payment transactions, dll)
+     */
+    public function destroy(Order $order)
+    {
+        // Pastikan user hanya bisa hapus order miliknya sendiri (customer) 
+        // atau admin bisa hapus semua order
+        if (Auth::user()->role === 'customer' && $order->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized access');
+        }
+
+        // Hanya bisa hapus order yang belum paid
+        if (in_array($order->status, ['PAID', 'SUCCESS'])) {
+            return back()->with('error', 'Pesanan yang sudah dibayar tidak dapat dibatalkan.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Hapus payment transactions terkait
+            $order->paymentTransactions()->delete();
+            
+            // Hapus order (soft delete jika menggunakan SoftDeletes)
+            $order->delete();
+            
+            DB::commit();
+            
+            return redirect()->route('customer.orders.index')
+                ->with('success', 'Pesanan berhasil dibatalkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to cancel order', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->with('error', 'Gagal membatalkan pesanan. Silakan coba lagi.');
+        }
+    }
+
     
 }

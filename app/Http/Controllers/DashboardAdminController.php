@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\OrderDeliveryStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
@@ -15,7 +16,7 @@ class DashboardAdminController extends Controller
         $tz   = 'Asia/Jakarta';
         $date = $request->get('date', now($tz)->toDateString());
 
-        $items = OrderDeliveryStatus::with(['mealPackage', 'menuMakanan'])
+        $items = OrderDeliveryStatus::with(['mealPackage', 'menuMakanan', 'confirmer'])
             ->whereDate('delivery_date', $date)
             ->orderByRaw("FIELD(status_siang, 'pending','sedang dikirim','sampai','gagal dikirim')")
             ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
@@ -44,8 +45,11 @@ class DashboardAdminController extends Controller
 
     public function updateStatus(Request $request, OrderDeliveryStatus $delivery)
     {
-        // field = 'status_siang' | 'status_malam'
-        // value = salah satu enum
+        $allowed = config('settings.delivery.update_status', []);
+        if (!in_array(Auth::user()->role, $allowed)) {
+            abort(403, 'Anda tidak memiliki akses untuk mengubah status delivery.');
+        }
+
         $validated = $request->validate([
             'field' => ['required', Rule::in(['status_siang', 'status_malam'])],
             'value' => ['required', Rule::in(['pending', 'diproses', 'sedang dikirim', 'sampai', 'gagal dikirim'])],
@@ -64,5 +68,32 @@ class DashboardAdminController extends Controller
         return redirect()
             ->route('dashboard.admin')
             ->with('success', 'Status pengantaran berhasil diperbarui.');
+    }
+
+    public function generateDelivery(Request $request)
+    {
+        $allowed = config('settings.delivery.generate', []);
+        if (!in_array(Auth::user()->role, $allowed)) {
+            abort(403, 'Anda tidak memiliki akses untuk membuat delivery.');
+        }
+
+        $tz   = 'Asia/Jakarta';
+        $date = $request->input('date', now($tz)->toDateString());
+
+        $exitCode = Artisan::call('heartfit:generate-delivery-statuses', [
+            '--date' => $date,
+        ]);
+
+        $output = trim(Artisan::output());
+
+        if ($exitCode === 0) {
+            return redirect()
+                ->route('dashboard.admin', ['date' => $date])
+                ->with('success', "Generate delivery berhasil. {$output}");
+        }
+
+        return redirect()
+            ->route('dashboard.admin', ['date' => $date])
+            ->with('error', "Generate delivery gagal. {$output}");
     }
 }

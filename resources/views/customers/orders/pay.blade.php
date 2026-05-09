@@ -208,7 +208,12 @@
             <div class="text-justify">
                 <a href="{{ route('orders.create') }}" class="btn btn-outline-secondary me-2">Buat Order Baru</a>
                 @if ($order->status === 'UNPAID' || $order->status === 'PENDING')
-                    <button id="btnPay" class="btn btn-primary">Bayar Sekarang</button>
+                    <button id="btnPay" class="btn btn-primary me-2">Bayar Sekarang</button>
+                    <form action="{{ route('orders.destroy', $order) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini? Semua data terkait akan dihapus.')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger">Batal</button>
+                    </form>
                 @else
                     <a href="{{ route('orders.finish', $order) }}" class="btn btn-success">Lihat Halaman Selesai</a>
                 @endif

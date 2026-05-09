@@ -13,10 +13,13 @@ class CreateUser extends Command
     protected $description = 'Create a new user with auto-generated name and default password';
 
     protected $roles = [
-        'admin' => 'Administrator',
-        'ahli_gizi' => 'Ahli Gizi',
-        'customer' => 'Customer',
-        'kurir' => 'Kurir',
+        'superadmin'     => 'Super Administrator',
+        'admin'          => 'Administrator',
+        'ahli_gizi'      => 'Ahli Gizi',
+        'medical_record' => 'Medical Record',
+        'bendahara'      => 'Bendahara',
+        'kurir'          => 'Kurir',
+        'customer'       => 'Customer',
     ];
 
     public function handle()

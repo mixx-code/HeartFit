@@ -9,21 +9,44 @@
        FILTER TANGGAL (Bootstrap only)
      ========================================= --}}
         <div class="mb-3 border-bottom">
-            <form method="GET" class="py-2">
-                <div class="row g-2 align-items-end">
-                    <div class="col-auto">
+            <div class="py-2 d-flex flex-wrap align-items-end gap-3">
+                {{-- Filter Tanggal --}}
+                <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
+                    <div>
                         <label for="date" class="form-label mb-0">Tanggal</label>
                         <input type="date" id="date" name="date" class="form-control" value="{{ $date }}">
                     </div>
-                    <div class="col-auto">
-                        <button class="btn btn-primary">Tampilkan</button>
-                    </div>
-                    <div class="col-auto">
-                        <a href="{{ route('dashboard.admin') }}" class="btn btn-outline-secondary">Hari Ini</a>
-                    </div>
-                </div>
-            </form>
+                    <button class="btn btn-primary">Tampilkan</button>
+                    <a href="{{ route('dashboard.admin') }}" class="btn btn-outline-secondary">Hari Ini</a>
+                </form>
+
+                {{-- Generate Delivery Manual — hanya role yang ada di settings.delivery.generate --}}
+                @if(in_array(auth()->user()->role, config('settings.delivery.generate', [])))
+                <form method="POST" action="{{ route('admin.deliveries.generate') }}" class="ms-auto"
+                      onsubmit="return confirm('Generate delivery untuk tanggal {{ $date }}?')">
+                    @csrf
+                    <input type="hidden" name="date" value="{{ $date }}">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bx bx-refresh me-1"></i>Generate Delivery
+                    </button>
+                </form>
+                @endif
+            </div>
         </div>
+
+        {{-- Flash Messages --}}
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                <i class="bx bx-check-circle me-1"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                <i class="bx bx-x-circle me-1"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
 
         @php
             // ===== Helper untuk seluruh halaman =====
@@ -79,10 +102,6 @@
     ';
             };
         @endphp
-
-        {{-- =========================================
-       ROW 1: KPI MINI (tambah sesuka hati)
-     ========================================= --}}
         <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-3">
             {{-- <div class="col">
                 <div class="card border-0 shadow-sm h-100">
@@ -148,15 +167,6 @@
                 </div>
             </div> --}}
         </div>
-
-        {{-- =========================================
-       ROW 2: TABEL + LIST (contoh)
-     ========================================= --}}
-        
-
-        {{-- =========================================
-       ROW 3: LIST PENGANTARAN (card per item)
-     ========================================= --}}
         <div class="row g-3">
             @forelse ($items as $row)
                 @php
@@ -168,28 +178,27 @@
                 @endphp
 
                 <div class="col-12">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm">
                         {{-- HEADER --}}
                         <div class="card-header bg-light">
-                            <div class="d-flex flex-column gap-1">
-                                <div class="d-flex align-items-center flex-wrap gap-2">
-                                    <h5 class="mb-0">{{ $row->mealPackage->nama_meal_package }}</h5>
-                                    <span
-                                        class="badge rounded-pill text-bg-info">{{ ucfirst($row->mealPackage->jenis_paket) }}</span>
-                                    <span class="badge rounded-pill text-dark border">Batch {{ $row->batch }}</span>
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <h6 class="mb-0 fw-semibold">{{ $row->mealPackage->nama_meal_package }}</h6>
+                                        <span class="badge rounded-pill text-bg-info">{{ ucfirst($row->mealPackage->jenis_paket) }}</span>
+                                        <span class="badge rounded-pill text-bg-secondary">Batch {{ $row->batch }}</span>
+                                    </div>
+                                    <div class="text-muted small mt-1">
+                                        <i class="bx bx-calendar me-1"></i>{{ \Carbon\Carbon::parse($row->delivery_date)->locale('id')->isoFormat('dddd, D MMMM Y') }}
+                                    </div>
                                 </div>
-                                <div class="d-flex flex-wrap gap-3 small text-secondary">
-                                    <span><i class="bx bx-calendar"></i>
-                                        {{ \Carbon\Carbon::parse($row->delivery_date)->locale('id')->isoFormat('dddd, D MMMM Y') }}
-                                    </span>
+                                <div class="small text-muted">
                                     @if ($row->confirmed_by)
-                                        <span><i class="bx bx-check-shield"></i>
-                                            Disetujui:
-                                            <strong>{{ $row->confirmedBy?->name ?? 'User #' . $row->confirmed_by }}</strong>
-                                            ({{ \Carbon\Carbon::parse($row->confirmed_at)->format('Y-m-d H:i') }})
-                                        </span>
+                                        <i class="bx bx-check-shield text-success me-1"></i>
+                                        {{ $row->confirmer?->name ?? '-' }}
+                                        &mdash; {{ \Carbon\Carbon::parse($row->confirmed_at)->format('d/m/Y H:i') }}
                                     @else
-                                        <span><i class="bx bx-time"></i> Belum dikonfirmasi</span>
+                                        <i class="bx bx-time text-warning me-1"></i>Belum dikonfirmasi
                                     @endif
                                 </div>
                             </div>
@@ -198,26 +207,27 @@
                         {{-- BODY --}}
                         <div class="card-body">
                             <div class="row g-3">
+
                                 {{-- MENU PREVIEW --}}
                                 <div class="col-lg-5">
                                     <div class="row">
                                         <div class="col-sm-6">
-                                            <div class="fw-semibold mb-1">Menu Siang</div>
+                                            <div class="fw-semibold small mb-2">Menu Siang</div>
                                             <ul class="list-unstyled small mb-0">
-                                                @forelse(array_slice($menuSiang,0,4) as $m)
-                                                    <li>• {{ $m }}</li>
+                                                @forelse(array_slice($menuSiang, 0, 5) as $m)
+                                                    <li class="py-1 border-bottom">{{ $m }}</li>
                                                 @empty
-                                                    <li class="text-secondary">-</li>
+                                                    <li class="text-muted">-</li>
                                                 @endforelse
                                             </ul>
                                         </div>
                                         <div class="col-sm-6 mt-3 mt-sm-0">
-                                            <div class="fw-semibold mb-1">Menu Malam</div>
+                                            <div class="fw-semibold small mb-2">Menu Malam</div>
                                             <ul class="list-unstyled small mb-0">
-                                                @forelse(array_slice($menuMalam,0,4) as $m)
-                                                    <li>• {{ $m }}</li>
+                                                @forelse(array_slice($menuMalam, 0, 5) as $m)
+                                                    <li class="py-1 border-bottom">{{ $m }}</li>
                                                 @empty
-                                                    <li class="text-secondary">-</li>
+                                                    <li class="text-muted">-</li>
                                                 @endforelse
                                             </ul>
                                         </div>
@@ -226,113 +236,44 @@
 
                                 {{-- STATUS SIANG --}}
                                 <div class="col-lg-3">
-                                    <div class="card bg-light border-0 h-100">
-                                        <div class="card-body d-flex flex-column">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Status Siang</span>
-                                                <span
-                                                    class="badge {{ $badge($row->status_siang) }}">{{ strtoupper($row->status_siang) }}</span>
-                                            </div>
-                                            {!! $renderStepper($stepSiang) !!}
-                                            <form method="POST" class="d-grid gap-2 mt-2"
-                                                action="{{ route('admin.deliveries.updateStatus', $row->id) }}">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="field" value="status_siang">
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-secondary {{ $row->status_siang === 'pending' ? 'active' : '' }}"
-                                                    name="value" value="pending"
-                                                    {{ $row->status_siang === 'pending' ? 'disabled' : '' }}>
-                                                    Pending
-                                                </button>
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-warning {{ $row->status_siang === 'diproses' ? 'active' : '' }}"
-                                                    name="value" value="diproses"
-                                                    {{ $row->status_siang === 'diproses' ? 'disabled' : '' }}>
-                                                    Diproses
-                                                </button>
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-info {{ $row->status_siang === 'sedang dikirim' ? 'active' : '' }}"
-                                                    name="value" value="sedang dikirim"
-                                                    {{ $row->status_siang === 'sedang dikirim' ? 'disabled' : '' }}>
-                                                    Sedang dikirim
-                                                </button>
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-success {{ $row->status_siang === 'sampai' ? 'active' : '' }}"
-                                                    name="value" value="sampai"
-                                                    {{ $row->status_siang === 'sampai' ? 'disabled' : '' }}>
-                                                    Sampai
-                                                </button>
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-danger {{ $row->status_siang === 'gagal dikirim' ? 'active' : '' }}"
-                                                    name="value" value="gagal dikirim"
-                                                    {{ $row->status_siang === 'gagal dikirim' ? 'disabled' : '' }}>
-                                                    Gagal DIkirim
-                                                </button>
-                                            </form>
-
-                                        </div>
-                                    </div>
+                                    <div class="fw-semibold small mb-2">Status Siang</div>
+                                    <span class="badge {{ $badge($row->status_siang) }} mb-2">{{ strtoupper($row->status_siang) }}</span>
+                                    {!! $renderStepper($stepSiang) !!}
+                                    <form method="POST" class="mt-3 d-flex gap-2 align-items-center"
+                                        action="{{ route('admin.deliveries.updateStatus', $row->id) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="field" value="status_siang">
+                                        <select name="value" class="form-select form-select-sm">
+                                            @foreach(['pending','diproses','sedang dikirim','sampai','gagal dikirim'] as $s)
+                                                <option value="{{ $s }}" {{ $row->status_siang === $s ? 'selected' : '' }}>
+                                                    {{ ucfirst($s) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary">submit</button>
+                                    </form>
                                 </div>
 
                                 {{-- STATUS MALAM --}}
                                 <div class="col-lg-3">
-                                    <div class="card bg-light border-0 h-100">
-                                        <div class="card-body d-flex flex-column">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span class="fw-semibold">Status Malam</span>
-                                                <span
-                                                    class="badge {{ $badge($row->status_malam) }}">{{ strtoupper($row->status_malam) }}</span>
-                                            </div>
-                                            {!! $renderStepper($stepMalam) !!}
-                                            <form method="POST" class="d-grid gap-2 mt-2"
-                                                action="{{ route('admin.deliveries.updateStatus', $row->id) }}">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="field" value="status_malam">
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-secondary {{ $row->status_malam === 'pending' ? 'active' : '' }}"
-                                                    name="value" value="pending"
-                                                    {{ $row->status_malam === 'pending' ? 'disabled' : '' }}>
-                                                    Pending
-                                                </button>
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-warning {{ $row->status_malam === 'diproses' ? 'active' : '' }}"
-                                                    name="value" value="diproses"
-                                                    {{ $row->status_malam === 'diproses' ? 'disabled' : '' }}>
-                                                    Diproses
-                                                </button>
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-info {{ $row->status_malam === 'sedang dikirim' ? 'active' : '' }}"
-                                                    name="value" value="sedang dikirim"
-                                                    {{ $row->status_malam === 'sedang dikirim' ? 'disabled' : '' }}>
-                                                    Sedang dikirim
-                                                </button>
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-success {{ $row->status_malam === 'sampai' ? 'active' : '' }}"
-                                                    name="value" value="sampai"
-                                                    {{ $row->status_malam === 'sampai' ? 'disabled' : '' }}>
-                                                    Sampai
-                                                </button>
-
-                                                <button type="submit"
-                                                    class="btn btn-outline-danger {{ $row->status_malam === 'gagal dikirim' ? 'active' : '' }}"
-                                                    name="value" value="gagal dikirim"
-                                                    {{ $row->status_malam === 'gagal dikirim' ? 'disabled' : '' }}>
-                                                    Gagal DIkirim
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </div>
+                                    <div class="fw-semibold small mb-2">Status Malam</div>
+                                    <span class="badge {{ $badge($row->status_malam) }} mb-2">{{ strtoupper($row->status_malam) }}</span>
+                                    {!! $renderStepper($stepMalam) !!}
+                                    <form method="POST" class="mt-3 d-flex gap-2 align-items-center"
+                                        action="{{ route('admin.deliveries.updateStatus', $row->id) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="field" value="status_malam">
+                                        <select name="value" class="form-select form-select-sm">
+                                            @foreach(['pending','diproses','sedang dikirim','sampai','gagal dikirim'] as $s)
+                                                <option value="{{ $s }}" {{ $row->status_malam === $s ? 'selected' : '' }}>
+                                                    {{ ucfirst($s) }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary">submit</button>
+                                    </form>
                                 </div>
 
                                 <div class="col-lg-1 d-none d-lg-block"></div>
@@ -346,37 +287,5 @@
                 </div>
             @endforelse
         </div>
-
-        {{-- =========================================
-       ROW 4: SLOT CARD LAIN (tinggal tambah)
-     ========================================= --}}
-        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mt-1">
-            {{-- Contoh placeholder card quick actions --}}
-            <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Aksi Cepat</h6>
-                    </div>
-                    <div class="card-body d-flex flex-wrap gap-2">
-                        <a href="" class="btn btn-primary btn-sm">Buat Pesanan</a>
-                        <a href="" class="btn btn-outline-secondary btn-sm">Lihat Issue</a>
-                        <a href="" class="btn btn-outline-primary btn-sm">Report</a>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Tambah card lain di sini --}}
-            <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body">Card kosong (isi nanti)</div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body">Card kosong (isi nanti)</div>
-                </div>
-            </div>
-        </div>
-
     </div>
 @endsection

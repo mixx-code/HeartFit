@@ -17,7 +17,8 @@ class MealPackagesController extends Controller
         $packages = MealPackages::with('packageType')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
-                    $sub->where('batch', 'like', "%{$q}%")
+                    $sub->where('nama_meal_package', 'like', "%{$q}%")
+                        ->orWhere('batch', 'like', "%{$q}%")
                         ->orWhere('jenis_paket', 'like', "%{$q}%")
                         ->orWhere('porsi_paket', 'like', "%{$q}%")
                         ->orWhere('detail_paket', 'like', "%{$q}%")

@@ -13,13 +13,11 @@
                 {{-- ================== FOTO PROFIL (ATAS) ================== --}}
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="https://placehold.co/400" alt="Foto Profil" class="rounded-circle border object-fit-cover"
-                            width="120" height="120" />
-                        <div>
-                            <h6 class="mb-1">Foto Profil</h6>
-                            <p class="text-muted mb-2">Placeholder foto profil. (Jika nanti ada field foto profil, bisa
-                                ditambahkan upload di sini.)</p>
-                        </div>
+                        <span class="avatar-initial rounded-circle bg-label-primary" style="width:50px;height:50px;font-size:28px;font-weight:600;display:flex;align-items:center;justify-content:center;">
+                            @if(auth()->check())
+                                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}{{ strtoupper(substr(strstr(auth()->user()->name, ' '), 1, 1)) }}
+                            @endif
+                        </span>
                     </div>
                 </div>
 

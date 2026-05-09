@@ -164,7 +164,7 @@
             grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
         }
         
-        .menu-item {
+        #menuPreview .menu-item {
             border: 1px solid #eef0f3;
             border-radius: 12px;
             padding: 10px 12px;
@@ -173,28 +173,28 @@
             position: relative;
             overflow: hidden;
         }
-        
-        .menu-item:hover {
+
+        #menuPreview .menu-item:hover {
             transform: translateY(-2px);
             border-color: #dbe3ff;
             box-shadow: 0 10px 22px rgba(13, 110, 253, .08);
         }
-        
-        .menu-item img {
+
+        #menuPreview .menu-item img {
             width: 100%;
             height: 120px;
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 8px;
         }
-        
-        .menu-item .menu-name {
+
+        #menuPreview .menu-item .menu-name {
             font-weight: 600;
             margin-bottom: 4px;
             color: #0f172a;
         }
-        
-        .menu-item .menu-desc {
+
+        #menuPreview .menu-item .menu-desc {
             font-size: 0.85rem;
             color: #64748b;
             line-height: 1.4;
@@ -215,27 +215,27 @@
             box-shadow: 0 10px 22px rgba(13, 110, 253, .08);
         }
 
-        .menu-mini .menu-title {
+        .menu-card .menu-mini .menu-title {
             font-weight: 700;
             margin: 0 0 4px;
             color: #0f172a;
             /* slate-900 */
         }
 
-        .menu-mini .menu-sub {
+        .menu-card .menu-mini .menu-sub {
             font-size: .85rem;
             color: #64748b;
             /* slate-500 */
         }
 
-        .menu-mini .row-inline {
+        .menu-card .menu-mini .row-inline {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 8px;
         }
 
-        .menu-mini .badge-soft {
+        .menu-card .menu-mini .badge-soft {
             font-size: .7rem;
             padding: 4px 8px;
             border-radius: 999px;
@@ -244,7 +244,7 @@
             color: #475569;
         }
 
-        .menu-empty {
+        #menuPreview .menu-empty {
             border: 1px dashed #e2e8f0;
             border-radius: 12px;
             padding: 18px;
@@ -552,18 +552,6 @@
                                         <div class="card-body">
                                             <div class="h6 mb-1">Transfer</div><small class="text-muted">BCA • BNI • BRI •
                                                 Mandiri • OVO • GoPay • DANA</small>
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="w-100">
-                                    <input type="radio" name="payment_method" class="btn-check" value="cod"
-                                        required>
-                                    <div class="card border-0 shadow-sm h-100 selectable-card pay">
-                                        <div class="card-body">
-                                            <div class="h6 mb-1">COD</div><small class="text-muted">Bayar di
-                                                tempat</small>
                                         </div>
                                     </div>
                                 </label>

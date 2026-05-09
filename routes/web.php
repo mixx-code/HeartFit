@@ -91,9 +91,9 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     // =======================
-    // ADMIN DASHBOARD — akses: admin | superadmin | ahli_gizi | bendahara | medical_record
+    // ADMIN DASHBOARD — akses: admin | superadmin | ahli_gizi | bendahara | medical_record | kurir
     // =======================
-    Route::middleware('role:admin,superadmin,ahli_gizi,bendahara,medical_record')->group(function () {
+    Route::middleware('role:admin,superadmin,ahli_gizi,bendahara,medical_record,kurir')->group(function () {
         Route::get('/dashboard/admin', [DashboardAdminController::class, 'index'])->name('dashboard.admin');
     });
 
@@ -106,13 +106,19 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     });
 
     // =======================
+    // DELIVERY — akses dikontrol penuh oleh config/settings.json
+    // =======================
+    Route::middleware('role:admin,superadmin,kurir')->group(function () {
+        Route::patch('/admin/deliveries/{delivery}/update-status', [DashboardAdminController::class, 'updateStatus'])
+            ->name('admin.deliveries.updateStatus');
+        Route::post('/admin/deliveries/generate', [DashboardAdminController::class, 'generateDelivery'])
+            ->name('admin.deliveries.generate');
+    });
+
+    // =======================
     // ADMIN ONLY - akses: admin | superadmin
     // =======================
     Route::middleware('role:admin,superadmin')->group(function () {
-
-
-        Route::patch('/admin/deliveries/{delivery}/update-status', [DashboardAdminController::class, 'updateStatus'])
-            ->name('admin.deliveries.updateStatus');
 
         Route::view('/admin/products/add', 'admin.products.addPaketMakanan')
             ->name('admin.products.add');
@@ -215,6 +221,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::get('/customer/orders', [OrderController::class, 'index'])->name('customer.orders.index');
 
         Route::post('/customer/orders',               [OrderController::class, 'store'])->name('orders.store')->middleware('block.order.window.db');
+        Route::delete('/customer/orders/{order}',    [OrderController::class, 'destroy'])->name('orders.destroy');
         Route::get('/customer/orders/{order}/pay',    [OrderController::class, 'pay'])->name('orders.pay');
         Route::get('/customer/orders/{order}/finish', [OrderController::class, 'finish'])->name('orders.finish');
         Route::post('/customer/orders/{order}/confirm', [OrderController::class, 'confirm'])->name('orders.confirm');

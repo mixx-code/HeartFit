@@ -21,7 +21,7 @@
         {{-- Dashboard --}}
         <li
             class="menu-item {{ request()->routeIs('dashboard.admin') || request()->routeIs('dashboard.customer') ? 'active' : '' }}">
-            @if ($isAuth && $role === 'admin' || $role === 'superadmin' || $role === 'ahli_gizi' || $role === 'bendahara' || $role === 'medical_record')
+            @if ($isAuth && $role === 'admin' || $role === 'superadmin' || $role === 'ahli_gizi' || $role === 'bendahara' || $role === 'medical_record' || $role === 'kurir')
                 <a href="{{ route('dashboard.admin') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-home-circle"></i>
                     <div data-i18n="Analytics">Dashboard</div>

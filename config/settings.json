@@ -1,0 +1,14 @@
+{
+    "delivery": {
+        "generate": [
+            "admin",
+            "superadmin",
+            "kurir"
+        ],
+        "update_status": [
+            "admin",
+            "superadmin",
+            "kurir"
+        ]
+    }
+}

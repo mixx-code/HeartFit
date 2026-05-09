@@ -34,10 +34,12 @@
                         @endif
                     </form>
 
-                    {{-- (Opsional) tombol buat order baru --}}
-                    <a class="btn btn-success" href="">
-                        <i class="bi bi-plus-circle"></i> Buat Order
-                    </a>
+                    {{-- Tombol buat order baru hanya untuk customer --}}
+                    @if(auth()->user()->role === 'customer')
+                        <a class="btn btn-success" href="{{ route('orders.create') }}">
+                            <i class="bi bi-plus-circle"></i> Buat Order
+                        </a>
+                    @endif
                 </div>
             </div>
 

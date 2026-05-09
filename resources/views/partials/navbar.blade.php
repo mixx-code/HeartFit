@@ -13,7 +13,32 @@
               <div class="navbar-nav align-items-center">
                 <div class="nav-item d-flex align-items-center">
                   @if (Auth::check())
-                  <h5 class="card-header">{{ Auth::user()->name }}</h5>
+                  <div class="d-flex align-items-center gap-2">
+                    <h5 class="card-header mb-0">{{ Auth::user()->name }}</h5>
+                    {{-- Label Periode Langganan Aktif --}}
+                    @php
+                      // Cek apakah customer memiliki order PAID (akan datang atau sedang aktif)
+                      $hasActiveDelivery = false;
+                      $activeOrder = null;
+                      if (Auth::user()->role === 'customer') {
+                        try {
+                          $activeOrder = \App\Models\Order::where('user_id', Auth::id())
+                              ->where('status', 'PAID')
+                              ->whereDate('end_date', '>=', \Carbon\Carbon::now())
+                              ->first();
+                          $hasActiveDelivery = !empty($activeOrder);
+                        } catch (\Exception $e) {
+                          $hasActiveDelivery = false;
+                        }
+                      }
+                    @endphp
+                    @if($hasActiveDelivery && $activeOrder)
+                      @php
+                        $endDate = \Carbon\Carbon::parse($activeOrder->end_date)->locale('id')->isoFormat('D MMMM YYYY');
+                      @endphp
+                      <span class="badge bg-info text-white" style="font-size: 11px;">Periode Langganan sampai {{ $endDate }}</span>
+                    @endif
+                  </div>
                   @endif
                   <i class="d-none bx bx-search fs-4 lh-0"></i>
                   <input
@@ -46,7 +71,9 @@
                 <li class="nav-item navbar-dropdown dropdown-user dropdown">
                   <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                     <div class="avatar avatar-online">
-                      <img src="{{ asset('assets/img/avatars/1.png') }}" alt class="w-px-40 h-auto rounded-circle" />
+                      <span class="avatar-initial rounded-circle bg-label-primary" style="font-size:14px;font-weight:600;">
+                        @auth{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}{{ strtoupper(substr(strstr(Auth::user()->name, ' '), 1, 1)) }}@endauth
+                      </span>
                     </div>
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end">
@@ -55,7 +82,9 @@
                         <div class="d-flex">
                           <div class="flex-shrink-0 me-3">
                             <div class="avatar avatar-online">
-                              <img src="../assets/img/avatars/1.png" alt class="w-px-40 h-auto rounded-circle" />
+                              <span class="avatar-initial rounded-circle bg-label-primary" style="font-size:14px;font-weight:600;">
+                                @auth{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}{{ strtoupper(substr(strstr(Auth::user()->name, ' '), 1, 1)) }}@endauth
+                              </span>
                             </div>
                           </div>
                           <div class="flex-grow-1">
@@ -65,30 +94,6 @@
                             @endif
                           </div>
                         </div>
-                      </a>
-                    </li>
-                    <li>
-                      <div class="dropdown-divider"></div>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="#">
-                        <i class="bx bx-user me-2"></i>
-                        <span class="align-middle">My Profile</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="#">
-                        <i class="bx bx-cog me-2"></i>
-                        <span class="align-middle">Settings</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a class="dropdown-item" href="#">
-                        <span class="d-flex align-items-center align-middle">
-                          <i class="flex-shrink-0 bx bx-credit-card me-2"></i>
-                          <span class="flex-grow-1 align-middle">Billing</span>
-                          <span class="flex-shrink-0 badge badge-center rounded-pill bg-danger w-px-20 h-px-20">4</span>
-                        </span>
                       </a>
                     </li>
                     <li>

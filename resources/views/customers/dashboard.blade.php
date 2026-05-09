@@ -9,6 +9,19 @@
 @php
   use Illuminate\Support\Str;
   $row = $items->first();
+  
+  // Cek apakah customer memiliki order aktif (seperti logic navbar)
+  $hasActiveOrder = false;
+  if (auth()->check() && auth()->user()->role === 'customer') {
+    try {
+      $hasActiveOrder = \App\Models\Order::where('user_id', auth()->id())
+          ->where('status', 'PAID')
+          ->whereDate('end_date', '>=', \Carbon\Carbon::now())
+          ->exists();
+    } catch (\Exception $e) {
+      $hasActiveOrder = false;
+    }
+  }
 @endphp
 
 {{-- === STATUS PENGANTARAN (KONDISIONAL) === --}}
@@ -209,7 +222,8 @@
   </div>
 @endif
 
-      {{-- CTA PESAN (SELALU TAMPIL) --}}
+      {{-- CTA PESAN (HANYA TAMPIL JIKA TIDAK ADA ORDER AKTIF) --}}
+      @if(!$hasActiveOrder)
       <div class="col-md-6 col-lg-4">
         <div class="card shadow-sm border-0 h-100">
           <div class="card-body">
@@ -219,16 +233,16 @@
               paket dan atur jadwal pengantaran sesuai kebutuhanmu.
             </p>
             @if (session('warning'))
-  <div class="alert alert-warning alert-dismissible fade show" role="alert">
-      {{ session('warning') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-@endif
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {{ session('warning') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
             <a href="{{ route('orders.create') }}" class="btn btn-primary">Pesan Sekarang</a>
           </div>
         </div>
       </div>
-
+      @endif
             {{-- KONTEN PAKET --}}
             <div id="paket" class="col-12">
                 <section class="py-5 bg-white border rounded-3">
@@ -290,14 +304,6 @@
                     </div>
                 </section>
             </div>
-
-            {{-- Kalender --}}
-            <div class="col-12">
-                <div class="py-5 bg-white border rounded-3">
-                    @include('customers.kalender')
-                </div>
-            </div>
-
         </div>
     </div>
 </div>

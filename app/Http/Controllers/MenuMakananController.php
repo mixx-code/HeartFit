@@ -235,10 +235,16 @@ class MenuMakananController extends Controller
             $fotoPaths = array_values($fotoPaths);
         }
         
-        // Upload foto baru jika ada
-        if ($request->hasFile('foto_makanan')) {
-            foreach ($request->file('foto_makanan') as $file) {
-                if ($file->isValid()) {
+        // Upload foto baru jika ada (handle array individual)
+        $fotoFiles = $request->file('foto_makanan', []);
+        if ($fotoFiles) {
+            // Jika $fotoFiles adalah array individual
+            if (!is_array($fotoFiles)) {
+                $fotoFiles = [$fotoFiles];
+            }
+            
+            foreach ($fotoFiles as $file) {
+                if ($file && $file->isValid()) {
                     // Simpan ke storage/app/public/menu_makanan
                     $path = $file->store('menu_makanan', 'public');
                     $fotoPaths[] = $path;
