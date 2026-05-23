@@ -76,26 +76,32 @@
                             <input type="file" id="foto_makanan" name="foto_makanan_single" class="form-control" 
                                 accept="image/jpeg,image/jpg,image/png">
                             <small class="text-muted d-block mt-1">
-                                Upload foto menu (jpeg, jpg, png). Maksimal 5 foto, 2MB per foto. Klik "Tambah Foto" untuk upload bertahap.
+                                Upload foto menu (jpeg, jpg, png). Maksimal 5 foto, 2MB per foto. Pilih file untuk langsung menambahkan.
                             </small>
-                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addFoto()">
-                                <i class="bx bx-plus"></i> Tambah Foto
-                            </button>
                             
                             @if($menuMakanan->foto_makanan && count($menuMakanan->foto_makanan) > 0)
                                 <div class="mt-3">
                                     <p class="text-muted small mb-2">Foto yang sudah ada:</p>
                                     <div class="row g-2" id="existingPhotos">
                                         @foreach($menuMakanan->foto_makanan as $index => $foto)
-                                            <div class="col-3" data-foto-index="{{ $index }}">
-                                                <div class="position-relative">
-                                                    <img src="{{ asset('storage/' . $foto) }}" class="img-fluid rounded" 
-                                                         style="max-height: 100px; width: 100%; object-fit: cover;">
-                                                    <div class="position-absolute top-0 end-0 m-1">
-                                                        <small class="badge bg-secondary me-1">{{ $index + 1 }}</small>
-                                                        <button type="button" class="btn btn-sm btn-danger" onclick="removeExistingFoto({{ $index }})" title="Hapus foto">
+                                            @php
+                                                $fotoPath = is_array($foto) ? ($foto['path'] ?? '') : $foto;
+                                                $fotoLabel = is_array($foto) ? ($foto['label'] ?? '') : '';
+                                            @endphp
+                                            <div class="col-6 col-md-3" data-foto-index="{{ $index }}">
+                                                <div class="card border shadow-sm h-100">
+                                                    <div class="position-relative">
+                                                        <img src="{{ asset('storage/' . $fotoPath) }}" class="card-img-top" 
+                                                             style="height: 100px; object-fit: cover;">
+                                                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeExistingFoto({{ $index }})" title="Hapus foto">
                                                             <i class="bx bx-x"></i>
                                                         </button>
+                                                    </div>
+                                                    <div class="card-body p-2">
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            name="existing_foto_label[{{ $index }}]"
+                                                            value="{{ $fotoLabel }}"
+                                                            placeholder="Keterangan foto">
                                                     </div>
                                                 </div>
                                             </div>
@@ -200,68 +206,76 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     // ====== Foto Upload Bertahap ======
-    let uploadedFiles = []; // Array untuk menyimpan file yang sudah diupload
+    let uploadedFiles = []; // Array {file, label}
     const fotoInput = document.getElementById('foto_makanan');
     const fotoPreview = document.getElementById('fotoPreview');
     const hiddenContainer = document.getElementById('hiddenFotoContainer');
-    
-    // Fungsi untuk menambah foto
-    window.addFoto = function() {
-        if (!fotoInput.files || fotoInput.files.length === 0) {
-            alert('Pilih foto terlebih dahulu');
-            return;
-        }
-        
-        const file = fotoInput.files[0];
+
+    // Auto-add saat pilih file
+    fotoInput.addEventListener('change', function() {
+        if (!this.files || this.files.length === 0) return;
+
+        const file = this.files[0];
         const totalFotos = uploadedFiles.length + getExistingFotosCount();
-        
+
         if (totalFotos >= 5) {
             alert('Maksimal 5 foto');
+            this.value = '';
             return;
         }
-        
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Tambah ke array
-                uploadedFiles.push(file);
-                
-                // Tambah preview
-                const col = document.createElement('div');
-                col.className = 'col-3';
-                col.setAttribute('data-foto-index', uploadedFiles.length - 1);
-                col.innerHTML = `
+
+        if (!file.type.startsWith('image/')) {
+            alert('File harus berupa gambar');
+            this.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const idx = uploadedFiles.length;
+            uploadedFiles.push({ file: file, label: '' });
+
+            const col = document.createElement('div');
+            col.className = 'col-6 col-md-3';
+            col.setAttribute('data-foto-index', idx);
+            col.innerHTML = `
+                <div class="card border shadow-sm h-100">
                     <div class="position-relative">
-                        <img src="${e.target.result}" class="img-fluid rounded" style="max-height: 100px; width: 100%; object-fit: cover;">
-                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeNewFoto(${uploadedFiles.length - 1})">
+                        <img src="${e.target.result}" class="card-img-top" style="height: 100px; object-fit: cover;">
+                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1" onclick="removeNewFoto(${idx})">
                             <i class="bx bx-x"></i>
                         </button>
                     </div>
-                `;
-                fotoPreview.appendChild(col);
-                
-                // Tambah hidden field
-                addHiddenField(file, uploadedFiles.length - 1);
-                
-                // Reset input
-                fotoInput.value = '';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            alert('File harus berupa gambar');
+                    <div class="card-body p-2">
+                        <input type="text" class="form-control form-control-sm foto-label-input" 
+                            placeholder="Keterangan foto (misal: Makan Siang)"
+                            data-label-index="${idx}"
+                            oninput="updateFotoLabel(${idx}, this.value)">
+                    </div>
+                </div>
+            `;
+            fotoPreview.appendChild(col);
+
+            addHiddenField(file, idx);
+            fotoInput.value = '';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Update label di array
+    window.updateFotoLabel = function(index, value) {
+        if (uploadedFiles[index]) {
+            uploadedFiles[index].label = value;
         }
+        const labelInput = hiddenContainer.querySelector(`input[name="foto_label[${index}]"]`);
+        if (labelInput) labelInput.value = value;
     };
     
     // Fungsi untuk menghapus foto baru
     window.removeNewFoto = function(index) {
-        // Hapus dari array
         uploadedFiles.splice(index, 1);
-        
-        // Hapus preview
         const element = document.querySelector(`#fotoPreview [data-foto-index="${index}"]`);
         if (element) element.remove();
-        
-        // Rebuild hidden fields
         rebuildHiddenFields();
     };
     
@@ -271,34 +285,41 @@ document.addEventListener("DOMContentLoaded", () => {
         hiddenInput.type = 'file';
         hiddenInput.name = `foto_makanan[${index}]`;
         hiddenInput.style.display = 'none';
-        
-        // Buat DataTransfer untuk menyimpan file
         const dt = new DataTransfer();
         dt.items.add(file);
         hiddenInput.files = dt.files;
-        
         hiddenContainer.appendChild(hiddenInput);
+
+        const labelInput = document.createElement('input');
+        labelInput.type = 'hidden';
+        labelInput.name = `foto_label[${index}]`;
+        labelInput.value = uploadedFiles[index]?.label || '';
+        hiddenContainer.appendChild(labelInput);
     }
     
     // Fungsi untuk rebuild hidden fields
     function rebuildHiddenFields() {
         hiddenContainer.innerHTML = '';
-        uploadedFiles.forEach((file, index) => {
-            addHiddenField(file, index);
+        uploadedFiles.forEach((item, index) => {
+            addHiddenField(item.file, index);
         });
         
-        // Update index di preview
         const previews = fotoPreview.querySelectorAll('[data-foto-index]');
         previews.forEach((element, index) => {
             element.setAttribute('data-foto-index', index);
             const button = element.querySelector('button');
             button.setAttribute('onclick', `removeNewFoto(${index})`);
+            const labelInput = element.querySelector('.foto-label-input');
+            if (labelInput) {
+                labelInput.setAttribute('data-label-index', index);
+                labelInput.setAttribute('oninput', `updateFotoLabel(${index}, this.value)`);
+            }
         });
     }
     
     // Fungsi untuk menghitung foto yang sudah ada
     function getExistingFotosCount() {
-        const existingPhotos = document.querySelectorAll('#existingPhotos .col-3:not(.removed)');
+        const existingPhotos = document.querySelectorAll('#existingPhotos [data-foto-index]:not(.removed)');
         return existingPhotos.length;
     }
     
@@ -314,10 +335,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ====== Remove Existing Foto ======
     window.removeExistingFoto = function(index) {
-        console.log('Removing existing foto:', index);
-        
         // Hide the foto element
-        const fotoElement = document.querySelector(`[data-foto-index="${index}"]`);
+        const fotoElement = document.querySelector(`#existingPhotos [data-foto-index="${index}"]`);
         if (fotoElement) {
             fotoElement.style.display = 'none';
             fotoElement.classList.add('removed');
@@ -329,9 +348,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const removedFotos = removedFotosInput.value ? JSON.parse(removedFotosInput.value) : [];
         
         if (existingFotos[index]) {
-            removedFotos.push(existingFotos[index]);
+            // Handle both old string format and new object format
+            const foto = existingFotos[index];
+            const path = (typeof foto === 'object' && foto.path) ? foto.path : foto;
+            removedFotos.push(path);
             removedFotosInput.value = JSON.stringify(removedFotos);
-            console.log('Removed fotos:', removedFotos);
         }
     };
 

@@ -78,12 +78,15 @@ class MenuMakananController extends Controller
 
         // 2) Upload foto jika ada
         $fotoPaths = [];
+        $fotoLabels = $request->input('foto_label', []);
         if ($request->hasFile('foto_makanan')) {
-            foreach ($request->file('foto_makanan') as $file) {
+            foreach ($request->file('foto_makanan') as $index => $file) {
                 if ($file->isValid()) {
-                    // Simpan ke storage/app/public/menu_makanan
                     $path = $file->store('menu_makanan', 'public');
-                    $fotoPaths[] = $path;
+                    $fotoPaths[] = [
+                        'path'  => $path,
+                        'label' => $fotoLabels[$index] ?? '',
+                    ];
                 }
             }
         }
@@ -213,6 +216,22 @@ class MenuMakananController extends Controller
 
         // 2) Upload foto jika ada dan hapus foto yang dipilih
         $fotoPaths = $menuMakanan->foto_makanan ?? []; // Ambil foto lama
+
+        // Normalize old format (plain strings) to new format (objects)
+        $fotoPaths = array_map(function ($item) {
+            if (is_string($item)) {
+                return ['path' => $item, 'label' => ''];
+            }
+            return $item;
+        }, $fotoPaths);
+
+        // Update labels of existing photos
+        $existingLabels = $request->input('existing_foto_label', []);
+        foreach ($existingLabels as $idx => $label) {
+            if (isset($fotoPaths[$idx])) {
+                $fotoPaths[$idx]['label'] = $label ?? '';
+            }
+        }
         
         // Hapus foto yang dipilih user
         $removedFotos = $request->input('removed_fotos');
@@ -225,29 +244,30 @@ class MenuMakananController extends Controller
                     unlink($fullPath);
                 }
                 
-                // Hapus dari array
-                $key = array_search($removedFoto, $fotoPaths);
-                if ($key !== false) {
-                    unset($fotoPaths[$key]);
-                }
+                // Hapus dari array (cari berdasarkan path)
+                $fotoPaths = array_filter($fotoPaths, function ($item) use ($removedFoto) {
+                    $path = is_array($item) ? ($item['path'] ?? '') : $item;
+                    return $path !== $removedFoto;
+                });
             }
-            // Reindex array
             $fotoPaths = array_values($fotoPaths);
         }
         
         // Upload foto baru jika ada (handle array individual)
         $fotoFiles = $request->file('foto_makanan', []);
+        $fotoLabels = $request->input('foto_label', []);
         if ($fotoFiles) {
-            // Jika $fotoFiles adalah array individual
             if (!is_array($fotoFiles)) {
                 $fotoFiles = [$fotoFiles];
             }
             
-            foreach ($fotoFiles as $file) {
+            foreach ($fotoFiles as $index => $file) {
                 if ($file && $file->isValid()) {
-                    // Simpan ke storage/app/public/menu_makanan
                     $path = $file->store('menu_makanan', 'public');
-                    $fotoPaths[] = $path;
+                    $fotoPaths[] = [
+                        'path'  => $path,
+                        'label' => $fotoLabels[$index] ?? '',
+                    ];
                 }
             }
         }
