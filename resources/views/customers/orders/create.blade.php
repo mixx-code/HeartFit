@@ -812,7 +812,8 @@ function renderCards(items){
         const specStr = encodeURIComponent(JSON.stringify(it.spec_menu||{}));
         const nameStr = encodeURIComponent(it.nama_menu ?? '-');
         const fotoStr = encodeURIComponent(JSON.stringify(it.foto_makanan||[]));
-        const firstFoto = it.foto_makanan && it.foto_makanan.length > 0 ? it.foto_makanan[0] : null;
+        const firstFotoRaw = it.foto_makanan && it.foto_makanan.length > 0 ? it.foto_makanan[0] : null;
+        const firstFoto = firstFotoRaw ? (typeof firstFotoRaw === 'object' && firstFotoRaw.path ? firstFotoRaw.path : firstFotoRaw) : null;
         
         console.log(`Item ${index}:`, {
           nama_menu: it.nama_menu,
@@ -916,17 +917,20 @@ function showMenuModal(menuName,spec,fotos){
           <span>Foto Menu</span>
         </h6>
         <div class="row g-3">
-          ${fotos.map((foto, index) => `
+          ${fotos.map((foto, index) => {
+            const fotoPath = (typeof foto === 'object' && foto.path) ? foto.path : foto;
+            const fotoLabel = (typeof foto === 'object' && foto.label) ? foto.label : ('Foto ' + (index + 1));
+            return `
             <div class="col-md-4 col-sm-6 col-6">
               <div class="card border-0 shadow-sm overflow-hidden foto-menu-item">
                 <div class="position-relative" style="height: 200px;">
-                  <img src="/storage/${foto}" 
+                  <img src="/storage/${fotoPath}" 
                        class="w-100 h-100" 
                        style="object-fit: cover; transition: transform 0.3s ease;"
                        onmouseover="this.style.transform='scale(1.05)'"
                        onmouseout="this.style.transform='scale(1)'"
-                       onclick="window.open('/storage/${foto}', '_blank')"
-                       alt="Foto menu ${index + 1}">
+                       onclick="window.open('/storage/${fotoPath}', '_blank')"
+                       alt="${fotoLabel}">
                   <div class="position-absolute top-0 end-0 m-2">
                     <span class="badge bg-dark bg-opacity-75 text-white">
                       <i class="bx bx-expand"></i>
@@ -934,11 +938,11 @@ function showMenuModal(menuName,spec,fotos){
                   </div>
                 </div>
                 <div class="card-body p-2 text-center">
-                  <small class="text-muted">Foto ${index + 1}</small>
+                  <small class="text-muted">${fotoLabel}</small>
                 </div>
               </div>
             </div>
-          `).join('')}
+          `}).join('')}
         </div>
       </div>
     `;

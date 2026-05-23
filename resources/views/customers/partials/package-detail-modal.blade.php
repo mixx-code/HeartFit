@@ -310,17 +310,20 @@ function openPackageModal(packageKey) {
                             <span>Foto Menu</span>
                         </h6>
                         <div class="row g-2">
-                            ${menu.foto_makanan.map((foto, index) => `
+                            ${menu.foto_makanan.map((foto, index) => {
+                                const fotoPath = (typeof foto === 'object' && foto.path) ? foto.path : foto;
+                                const fotoLabel = (typeof foto === 'object' && foto.label) ? foto.label : ('Foto ' + (index + 1));
+                                return `
                                 <div class="col-md-4 col-6">
                                     <div class="card border-0 shadow-sm overflow-hidden">
                                         <div class="position-relative" style="height: 120px;">
-                                            <img src="/storage/${foto}" 
+                                            <img src="/storage/${fotoPath}" 
                                                  class="w-100 h-100" 
                                                  style="object-fit: cover; transition: transform 0.3s ease;"
                                                  onmouseover="this.style.transform='scale(1.05)'"
                                                  onmouseout="this.style.transform='scale(1)'"
-                                                 onclick="window.open('/storage/${foto}', '_blank')"
-                                                 alt="Foto menu ${index + 1}">
+                                                 onclick="window.open('/storage/${fotoPath}', '_blank')"
+                                                 alt="${fotoLabel}">
                                             <div class="position-absolute top-0 end-0 m-2">
                                                 <span class="badge bg-dark bg-opacity-75 text-white">
                                                     <i class="bx bx-expand fs-6"></i>
@@ -328,11 +331,11 @@ function openPackageModal(packageKey) {
                                             </div>
                                         </div>
                                         <div class="card-body p-2 text-center">
-                                            <small class="text-muted">Foto ${index + 1}</small>
+                                            <small class="text-muted">${fotoLabel}</small>
                                         </div>
                                     </div>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </div>
                 `;
