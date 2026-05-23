@@ -26,6 +26,7 @@ class Order extends Model
         'paid_at',
         'meta',
         'notes',
+        'whatsapp',
     ];
 
     protected $casts = [

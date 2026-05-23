@@ -78,6 +78,38 @@ class OrderController extends Controller
 
 
 
+    public function report(Request $request)
+    {
+        $q        = $request->input('q');
+        $dateFrom = $request->input('date_from');
+        $dateTo   = $request->input('date_to');
+
+        $orders = Order::query()
+            ->with([
+                'user:id,name,email,deleted_at',
+                'user.detail:id,user_id,hp',
+            ])
+            ->when($q, function ($query) use ($q) {
+                $query->where(function ($sub) use ($q) {
+                    $sub->where('order_number', 'like', "%{$q}%")
+                        ->orWhere('package_label', 'like', "%{$q}%")
+                        ->orWhere('package_category', 'like', "%{$q}%")
+                        ->orWhere('status', 'like', "%{$q}%")
+                        ->orWhereHas('user', function ($uq) use ($q) {
+                            $uq->withTrashed()
+                                ->where('name', 'like', "%{$q}%")
+                                ->orWhere('email', 'like', "%{$q}%");
+                        });
+                });
+            })
+            ->when($dateFrom, fn($query) => $query->whereDate('created_at', '>=', $dateFrom))
+            ->when($dateTo, fn($query) => $query->whereDate('created_at', '<=', $dateTo))
+            ->latest('id')
+            ->get();
+
+        return view('admin.orders.report', compact('orders', 'q', 'dateFrom', 'dateTo'));
+    }
+
     public function create()
     {
         $packages = MealPackages::with('packageType')
@@ -158,8 +190,9 @@ class OrderController extends Controller
             'unique_menus'       => ['nullable'],
             'unique_menu_count'  => ['nullable', 'integer', 'min:0'],
             
-            // catatan khusus untuk paket personal
-            'notes'              => ['nullable', 'string', 'max:500'],
+            // catatan khusus
+            'notes'              => ['required', 'string', 'max:500'],
+            'whatsapp'           => ['required', 'string', 'max:20', 'regex:/^62[0-9]{8,18}$/'],
         ]);
 
         // AMBIL DARI DB (bukan dari $this->packages)
@@ -223,6 +256,7 @@ class OrderController extends Controller
             'unique_menus'       => $uniqueMenus,
             'unique_menu_count'  => $uniqueMenuCount,
             'notes'              => $data['notes'] ?? null,
+            'whatsapp'           => $data['whatsapp'] ?? null,
         ];
 
         $json = json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
@@ -256,7 +290,8 @@ class OrderController extends Controller
             'unique_menus'       => ['nullable'],
             'unique_menu_count'  => ['nullable', 'integer', 'min:0'],
             'meta'               => ['nullable'],
-            'notes'              => ['nullable', 'string', 'max:500'],
+            'notes'              => ['required', 'string', 'max:500'],
+            'whatsapp'           => ['required', 'string', 'max:20', 'regex:/^62[0-9]{8,18}$/'],
         ]);
 
         // --- normalisasi incoming JSON string → array ---
@@ -341,6 +376,7 @@ class OrderController extends Controller
             'status'            => 'UNPAID',
             'meta'              => $meta,
             'notes'             => $data['notes'] ?? null,
+            'whatsapp'          => $data['whatsapp'] ?? null,
         ]);
 
         // --- alur redirect sama seperti sebelumnya ---
@@ -974,6 +1010,26 @@ class OrderController extends Controller
         ]);
 
         return view('admin.orders.show', compact('order'));
+    }
+
+    public function struk(Order $order)
+    {
+        $order->load([
+            'user:id,name,email',
+            'user.detail:id,user_id,hp,alamat',
+        ]);
+
+        return view('admin.orders.struk', compact('order'));
+    }
+
+    public function downloadPdf(Order $order, PdfService $pdfService)
+    {
+        $order->load([
+            'user:id,name,email',
+            'user.detail:id,user_id,hp,alamat',
+        ]);
+
+        return $pdfService->downloadOrderPdf($order);
     }
 
     /** Generate PDF untuk detail order */

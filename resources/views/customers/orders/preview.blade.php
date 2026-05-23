@@ -38,10 +38,17 @@
             <div class="fw-semibold">{{ strtoupper(str_replace('_',' ',$summary['payment_method'])) }}</div>
           </div>
 
-          @if(!empty($summary['notes']) && strcasecmp($summary['package_category'] ?? '', 'personal') === 0)
+          @if(!empty($summary['notes']))
           <div class="mb-3">
-            <label class="form-label text-muted small">Catatan</label>
+            <label class="form-label text-muted small">Catatan Khusus</label>
             <div class="form-text">{{ $summary['notes'] }}</div>
+          </div>
+          @endif
+
+          @if(!empty($summary['whatsapp']))
+          <div class="mb-3">
+            <label class="form-label text-muted small">Nomor WhatsApp</label>
+            <div class="fw-semibold">{{ $summary['whatsapp'] }}</div>
           </div>
           @endif
 
@@ -80,6 +87,7 @@
               <input type="hidden" name="unique_menus"      value='@json($summary["unique_menus"])'>
               <input type="hidden" name="unique_menu_count" value="{{ $summary['unique_menu_count'] }}">
               <input type="hidden" name="notes"             value="{{ $summary['notes'] ?? '' }}">
+              <input type="hidden" name="whatsapp"          value="{{ $summary['whatsapp'] ?? '' }}">
               <button type="submit" class="btn btn-primary">Konfirmasi Pesanan</button>
             </form>
           </div>
