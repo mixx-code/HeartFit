@@ -508,22 +508,47 @@
                             </div>
                         </div>
 
-                        {{-- CATATAN PESANAN (Hanya untuk paket personal) --}}
-                        <div class="card border-0 shadow-sm d-none" id="notesCard">
+                        {{-- CATATAN PESANAN --}}
+                        <div class="card border-0 shadow-sm" id="notesCard">
                             <div class="card-body">
                                 <label for="orderNotes" class="form-label fw-semibold">
-                                    <i class="bx bx-comment-dots me-2"></i>Catatan Khusus (Opsional)
+                                    <i class="bx bx-comment-dots me-2"></i>Catatan Khusus <span class="text-danger">*</span>
                                 </label>
                                 <textarea 
                                     name="notes" 
                                     id="orderNotes" 
                                     class="form-control" 
                                     rows="3" 
-                                    placeholder="Tambahkan catatan khusus untuk paket personal Anda (contoh: preferensi makanan, alergi, tujuan diet, dll.)"
+                                    placeholder="Tambahkan catatan khusus untuk pesanan Anda (contoh: preferensi makanan, alergi, tujuan diet, dll.)"
                                     maxlength="500"
+                                    required
                                 ></textarea>
                                 <div class="form-text">
                                     <small>Maksimal 500 karakter. Catatan akan dilihat oleh ahli gizi.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- NOMOR WHATSAPP --}}
+                        <div class="card border-0 shadow-sm mt-3" id="whatsappCard">
+                            <div class="card-body">
+                                <label for="orderWhatsapp" class="form-label fw-semibold">
+                                    <i class="bx bxl-whatsapp me-2"></i>Nomor WhatsApp <span class="text-danger">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    name="whatsapp" 
+                                    id="orderWhatsapp" 
+                                    class="form-control" 
+                                    placeholder="6289745644634"
+                                    maxlength="20"
+                                    pattern="^62[0-9]{8,18}$"
+                                    title="Nomor harus diawali 62, contoh: 6289745644634"
+                                    required
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                >
+                                <div class="form-text">
+                                    <small>Nomor WhatsApp aktif, contoh penulisan 6289745644634</small>
                                 </div>
                             </div>
                         </div>
@@ -1068,20 +1093,6 @@ function fillSummary(){
   renderMenuChips(names);
   renderSummaryMenuList(names);
 
-  // Tampilkan/sembunyikan field catatan untuk paket personal
-  const notesCard = document.getElementById('notesCard');
-  if (notesCard) {
-    const isPersonal = category && category.toLowerCase() === 'personal';
-    if (isPersonal) {
-      notesCard.classList.remove('d-none');
-    } else {
-      notesCard.classList.add('d-none');
-      // Clear notes jika bukan personal
-      const notesField = document.getElementById('orderNotes');
-      if (notesField) notesField.value = '';
-    }
-  }
-
   // Hitung amount_total (kalau belum ada logika ongkir/diskon, samakan dengan priceNum)
 const amountTotal = priceNum;
 
@@ -1136,6 +1147,12 @@ nextBtns.forEach(btn=>btn.addEventListener('click',()=>{
     fillSummary();
     showStep(3);
   } else if(current===3){
+    const notesEl = document.getElementById('orderNotes');
+    const waEl = document.getElementById('orderWhatsapp');
+    let step3Invalid = false;
+    if (notesEl && !notesEl.value.trim()) { notesEl.classList.add('is-invalid'); step3Invalid = true; } else if (notesEl) { notesEl.classList.remove('is-invalid'); }
+    if (waEl && (!waEl.value.trim() || !/^62[0-9]{8,18}$/.test(waEl.value.trim()))) { waEl.classList.add('is-invalid'); step3Invalid = true; } else if (waEl) { waEl.classList.remove('is-invalid'); }
+    if (step3Invalid) { alert('Harap isi Catatan Khusus dan Nomor WhatsApp (harus diawali 62).'); return; }
     showStep(4);
     const payChecked = document.querySelector('input[name="payment_method"]:checked');
     if (!payChecked) {

@@ -186,7 +186,10 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         // Tetap satu nama: admin.orders.index (biar menu kamu konsisten)
         Route::get('/admin/orders', [OrderController::class, 'viewOrderByAdmin'])->name('admin.orders.index');
         // Detail order
+        Route::get('/admin/orders/report', [OrderController::class, 'report'])->name('admin.orders.report');
         Route::get('/admin/orders/{order}', [OrderController::class, 'show'])->name('admin.orders.show');
+        Route::get('/admin/orders/{order}/struk', [OrderController::class, 'struk'])->name('admin.orders.struk');
+        Route::get('/admin/orders/{order}/pdf', [OrderController::class, 'downloadPdf'])->name('admin.orders.pdf');
         // Kalau kamu mau URL khusus bendahara (mis. /bendahara/orders), beri NAMA BERBEDA
         // Route::get('/bendahara/orders', [OrderController::class, 'viewOrderByAdmin'])->name('bendahara.orders.index');
     });
