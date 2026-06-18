@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 
 class AhliGiziController extends Controller
 {
@@ -17,15 +18,14 @@ class AhliGiziController extends Controller
         $q = $request->input('q');
         $perPage = (int) $request->input('per_page', 10);
 
-        // Ambil order customer dengan paket personal
         $orders = Order::query()
             ->whereHas('user', function ($query) {
                 $query->where('role', 'customer');
             })
-            ->where('package_type', 'personal') // Filter paket personal
+            ->where('package_category', 'personal')
             ->with([
                 'user:id,name,email',
-                'user.detail:user_id,mr,nik,hp' // Load detail untuk nomor WA
+                'user.detail:user_id,mr,nik,hp'
             ])
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($subQuery) use ($q) {
@@ -41,7 +41,21 @@ class AhliGiziController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return view('ahli_gizi.orders.index', compact('orders', 'perPage'));
+        $today = Carbon::today();
+
+        $summary = [
+            'total_customers' => User::where('role', 'customer')->count(),
+            'total_orders'    => Order::count(),
+            'active_today'    => Order::where('status', 'PAID')
+                ->whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today)
+                ->count(),
+            'orders_this_month' => Order::whereYear('created_at', $today->year)
+                ->whereMonth('created_at', $today->month)
+                ->count(),
+        ];
+
+        return view('ahli_gizi.orders.index', compact('orders', 'perPage', 'summary'));
     }
 
     /**

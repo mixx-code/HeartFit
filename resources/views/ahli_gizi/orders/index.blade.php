@@ -1,8 +1,81 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Order Customer - Paket Personal')
+@section('title', 'Dashboard Ahli Gizi')
 @section('content')
 <div class="container-xxl flex-grow-1 container-p-y">
+
+    {{-- Summary Cards --}}
+    <div class="row g-4 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="fw-semibold d-block mb-1 text-muted">Total Customer</span>
+                            <h3 class="card-title mb-0">{{ number_format($summary['total_customers']) }}</h3>
+                        </div>
+                        <div class="avatar flex-shrink-0">
+                            <span class="avatar-initial rounded bg-label-primary">
+                                <i class="bx bx-user"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="fw-semibold d-block mb-1 text-muted">Total Orders</span>
+                            <h3 class="card-title mb-0">{{ number_format($summary['total_orders']) }}</h3>
+                        </div>
+                        <div class="avatar flex-shrink-0">
+                            <span class="avatar-initial rounded bg-label-info">
+                                <i class="bx bx-receipt"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="fw-semibold d-block mb-1 text-muted">Order Aktif Hari Ini</span>
+                            <h3 class="card-title mb-0">{{ number_format($summary['active_today']) }}</h3>
+                        </div>
+                        <div class="avatar flex-shrink-0">
+                            <span class="avatar-initial rounded bg-label-success">
+                                <i class="bx bx-check-circle"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between">
+                        <div>
+                            <span class="fw-semibold d-block mb-1 text-muted">Orders Bulan Ini</span>
+                            <h3 class="card-title mb-0">{{ number_format($summary['orders_this_month']) }}</h3>
+                        </div>
+                        <div class="avatar flex-shrink-0">
+                            <span class="avatar-initial rounded bg-label-warning">
+                                <i class="bx bx-calendar"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Order Customer - Paket Personal</h5>
@@ -77,7 +150,7 @@
                                             <i class="bx bx-dots-vertical-rounded"></i>
                                         </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="{{ route('order.show', $order->id) }}">
+                                            <a class="dropdown-item" href="{{ route('admin.orders.show', $order->id) }}">
                                                 <i class="bx bx-detail me-1"></i> Detail
                                             </a>
                                             @if($order->user->detail && $order->user->detail->hp)

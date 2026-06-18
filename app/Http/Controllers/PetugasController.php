@@ -91,7 +91,7 @@ class PetugasController extends Controller
         $validated = $request->validate([
             'name'  => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'role'  => 'required|string|in:admin,ahli_gizi,medical_record,bendahara',
+            'role'  => 'required|string|in:admin,ahli_gizi',
         ]);
 
         try {

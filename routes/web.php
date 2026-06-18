@@ -198,8 +198,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     // MENU MAKANAN — akses: admin + ahli_gizi
     // (SATU DEFINISI ROUTE SAJA)
     // =======================
-    Route::middleware('role:admin,superadmin,ahli_gizi')->group(function () {
-        // Nama route tetap "admin.menuMakanan*" supaya sidebar kamu gak perlu diubah
+    Route::middleware('role:admin,superadmin')->group(function () {
         Route::get('/admin/menuMakanan', [MenuMakananController::class, 'index'])->name('admin.menuMakanan');
         Route::get('/admin/menuMakanan/addMenuMakanan', [MenuMakananController::class, 'create'])->name('admin.menuMakanan.addMenuMakanan');
         Route::post('/admin/menuMakanan/store', [MenuMakananController::class, 'store'])->name('admin.menuMakanan.store');

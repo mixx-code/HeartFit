@@ -15,7 +15,12 @@ class CustomerController extends Controller
 
         $customers = User::query()
             ->where('role', 'customer')
-            ->with(['detail:id,user_id,mr,nik']) // biar bisa akses $c->detail tanpa N+1
+            ->with([
+                'detail:id,user_id,mr,nik',
+                'createdBy:id,name',
+                'updatedBy:id,name',
+                'deletedBy:id,name',
+            ])
             ->when($q, function ($qb) use ($q) {
                 $qb->where(function ($b) use ($q) {
                     $b->where('name', 'like', "%{$q}%")

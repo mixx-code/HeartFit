@@ -20,8 +20,13 @@
     <ul class="menu-inner py-1">
         {{-- Dashboard --}}
         <li
-            class="menu-item {{ request()->routeIs('dashboard.admin') || request()->routeIs('dashboard.customer') ? 'active' : '' }}">
-            @if ($isAuth && $role === 'admin' || $role === 'superadmin' || $role === 'ahli_gizi' || $role === 'bendahara' || $role === 'medical_record' || $role === 'kurir')
+            class="menu-item {{ request()->routeIs('dashboard.admin') || request()->routeIs('dashboard.customer') || request()->routeIs('ahli_gizi.orders') ? 'active' : '' }}">
+            @if ($isAuth && $role === 'ahli_gizi')
+                <a href="{{ route('ahli_gizi.orders') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                    <div data-i18n="Analytics">Dashboard</div>
+                </a>
+            @elseif ($isAuth && ($role === 'admin' || $role === 'superadmin' || $role === 'bendahara' || $role === 'medical_record' || $role === 'kurir'))
                 <a href="{{ route('dashboard.admin') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-home-circle"></i>
                     <div data-i18n="Analytics">Dashboard</div>
@@ -152,26 +157,6 @@
         {{-- AHLI GIZI ONLY            --}}
         {{-- ========================= --}}
         @if ($isAuth && $role === 'ahli_gizi')
-            <li class="menu-header small text-uppercase"><span class="menu-header-text">Menu Makanan</span></li>
-            <li class="menu-item {{ request()->routeIs('admin.menuMakanan*') ? 'active open' : '' }}">
-                <a href="javascript:void(0);" class="menu-link menu-toggle">
-                    <i class="menu-icon tf-icons bx bx-restaurant"></i>
-                    <div data-i18n="Form Elements">Menu Makanan</div>
-                </a>
-                <ul class="menu-sub">
-                    <li class="menu-item {{ request()->routeIs('admin.menuMakanan') ? 'active' : '' }}">
-                        <a href="{{ route('admin.menuMakanan') }}" class="menu-link">
-                            <div data-i18n="Input groups">List Menu</div>
-                        </a>
-                    </li>
-                    <li
-                        class="menu-item {{ request()->routeIs('admin.menuMakanan.addMenuMakanan') ? 'active' : '' }}">
-                        <a href="{{ route('admin.menuMakanan.addMenuMakanan') }}" class="menu-link">
-                            <div data-i18n="Input groups">Tambah Menu</div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
             <li class="menu-header small text-uppercase"><span class="menu-header-text">Data Customers</span></li>
             <li
                 class="menu-item {{ request()->routeIs('admin.data.customers*', 'admin.data.customer*') ? 'active open' : '' }}">

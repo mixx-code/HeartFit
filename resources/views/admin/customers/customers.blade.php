@@ -72,9 +72,9 @@
             <tr>
               <td>{{ $c['name'] }}</td>
               <td>{{ $c['email'] }}</td>
-              <td>{{ $c['created_by'] }}</td>
-              <td>{{ $c['updated_by'] }}</td>
-              <td>{{ $c['deleted_by'] }}</td>
+              <td>{{ $c->createdBy->name ?? '-' }}</td>
+              <td>{{ $c->updatedBy->name ?? '-' }}</td>
+              <td>{{ $c->deletedBy->name ?? '-' }}</td>
               <td>{{ $c['created_at'] }}</td>
               <td>{{ $c['updated_at'] }}</td>
               <td>{{ $c['deleted_at'] }}</td>

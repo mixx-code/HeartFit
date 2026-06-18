@@ -5,9 +5,10 @@
     <div class="container-xxl flex-grow-1 container-p-y">
         <div class="col-xl">
             <div class="card mb-4">
+                @php $readOnly = auth()->user()->role === 'ahli_gizi'; @endphp
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Edit Data Customer</h5>
-                    <small class="text-muted float-end">Perbarui data berikut</small>
+                    <h5 class="mb-0">{{ $readOnly ? 'Detail Data Customer' : 'Edit Data Customer' }}</h5>
+                    <small class="text-muted float-end">{{ $readOnly ? 'Lihat data customer' : 'Perbarui data berikut' }}</small>
                 </div>
 
                 {{-- ================== FOTO PROFIL (ATAS) ================== --}}
@@ -69,7 +70,7 @@
                                 <span class="input-group-text"><i class="bx bx-user"></i></span>
                                 <input type="text" id="name" name="name"
                                     class="form-control @error('name') is-invalid @enderror"
-                                    value="{{ old('name', $detail->user->name) }}" required>
+                                    value="{{ old('name', $detail->user->name) }}" {{ $readOnly ? 'readonly' : 'required' }}>
                                 @error('name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -82,7 +83,7 @@
                                 <span class="input-group-text"><i class="bx bx-envelope"></i></span>
                                 <input type="email" id="email" name="email"
                                     class="form-control @error('email') is-invalid @enderror"
-                                    value="{{ old('email', $detail->user->email) }}" required>
+                                    value="{{ old('email', $detail->user->email) }}" {{ $readOnly ? 'readonly' : 'required' }}>
                                 @error('email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -109,7 +110,7 @@
                                 <span class="input-group-text"><i class="bx bx-id-card"></i></span>
                                 <input type="text" id="mr" name="mr"
                                     class="form-control @error('mr') is-invalid @enderror"
-                                    value="{{ old('mr', $detail->mr) }}">
+                                    value="{{ old('mr', $detail->mr) }}" {{ $readOnly ? 'readonly' : '' }}>
                                 @error('mr')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -122,7 +123,7 @@
                                 <span class="input-group-text"><i class="bx bx-id-card"></i></span>
                                 <input type="text" id="nik" name="nik"
                                     class="form-control @error('nik') is-invalid @enderror"
-                                    value="{{ old('nik', $detail->nik) }}">
+                                    value="{{ old('nik', $detail->nik) }}" {{ $readOnly ? 'readonly' : '' }}>
                                 @error('nik')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -134,7 +135,7 @@
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text"><i class="bx bx-home"></i></span>
                                 <textarea id="alamat" name="alamat" class="form-control @error('alamat') is-invalid @enderror" rows="2"
-                                    placeholder="Alamat lengkap">{{ old('alamat', $detail->alamat) }}</textarea>
+                                    placeholder="Alamat lengkap" {{ $readOnly ? 'readonly' : '' }}>{{ old('alamat', $detail->alamat) }}</textarea>
                                 @error('alamat')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -146,7 +147,7 @@
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text"><i class="bx bx-male-female"></i></span>
                                 <select id="jenis_kelamin" name="jenis_kelamin"
-                                    class="form-select @error('jenis_kelamin') is-invalid @enderror">
+                                    class="form-select @error('jenis_kelamin') is-invalid @enderror" {{ $readOnly ? 'disabled' : '' }}>
                                     <option value="">-- Pilih --</option>
                                     <option value="L" @selected(old('jenis_kelamin', $detail->jenis_kelamin) === 'L')>Laki-laki</option>
                                     <option value="P" @selected(old('jenis_kelamin', $detail->jenis_kelamin) === 'P')>Perempuan</option>
@@ -163,10 +164,10 @@
                                 <span class="input-group-text"><i class="bx bx-calendar"></i></span>
                                 <input type="text" id="tempat_lahir" name="tempat_lahir"
                                     class="form-control @error('tempat_lahir') is-invalid @enderror"
-                                    placeholder="Tempat lahir" value="{{ old('tempat_lahir', $detail->tempat_lahir) }}">
+                                    placeholder="Tempat lahir" value="{{ old('tempat_lahir', $detail->tempat_lahir) }}" {{ $readOnly ? 'readonly' : '' }}>
                                 <input type="date" id="tanggal_lahir" name="tanggal_lahir"
                                     class="form-control @error('tanggal_lahir') is-invalid @enderror"
-                                    value="{{ $tgl }}">
+                                    value="{{ $tgl }}" {{ $readOnly ? 'readonly' : '' }}>
                             </div>
                             @error('tempat_lahir')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -181,9 +182,9 @@
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bx bx-body"></i></span>
                                 <input type="number" id="berat_badan" class="form-control" placeholder="Berat (kg)"
-                                    value="{{ $bb }}">
+                                    value="{{ $bb }}" {{ $readOnly ? 'readonly' : '' }}>
                                 <input type="number" id="tinggi_badan" class="form-control" placeholder="Tinggi (cm)"
-                                    value="{{ $tb }}">
+                                    value="{{ $tb }}" {{ $readOnly ? 'readonly' : '' }}>
                             </div>
                             {{-- field yang dipost ke server (sesuai validator) --}}
                             <input type="hidden" id="bb_tb" name="bb_tb"
@@ -201,7 +202,7 @@
                                 <span class="input-group-text"><i class="bx bx-phone"></i></span>
                                 <input type="text" id="hp" name="hp"
                                     class="form-control @error('hp') is-invalid @enderror"
-                                    value="{{ old('hp', $detail->hp) }}">
+                                    value="{{ old('hp', $detail->hp) }}" {{ $readOnly ? 'readonly' : '' }}>
                                 @error('hp')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -212,7 +213,7 @@
                             <label class="form-label" for="usia">Usia</label>
                             <input type="number" id="usia" name="usia"
                                 class="form-control @error('usia') is-invalid @enderror" placeholder="Usia (tahun)"
-                                value="{{ old('usia', $detail->usia) }}">
+                                value="{{ old('usia', $detail->usia) }}" {{ $readOnly ? 'readonly' : '' }}>
                             @error('usia')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -226,7 +227,8 @@
                             <img src="{{ $srcKtp ?? asset('assets/img/placeholder-id.png') }}" alt="Foto KTP"
                                 class="rounded border mb-3" height="200" width="320" id="previewKtp" />
 
-                            {{-- Tombol upload & reset --}}
+                            {{-- Tombol upload & reset — hanya untuk non ahli_gizi --}}
+                            @if(!$readOnly)
                             <div class="button-wrapper">
                                 <label for="uploadKtp" class="btn btn-primary me-2 mb-2" tabindex="0">
                                     <span class="d-none d-sm-inline">Upload KTP baru</span>
@@ -240,6 +242,7 @@
                                 </button>
                                 <p class="text-muted mb-0">Allowed JPG/PNG. Max 800KB</p>
                             </div>
+                            @endif
                         </div>
                         {{-- Pertahankan kondisi list saat kembali --}}
                         <input type="hidden" name="q" value="{{ request('q') }}">
@@ -247,8 +250,10 @@
                         <input type="hidden" name="page" value="{{ request('page') }}">
 
                         <div class="text-end">
-                            <button type="submit" class="btn btn-primary me-2">Simpan</button>
-                            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">Batal</a>
+                            @if(!$readOnly)
+                                <button type="submit" class="btn btn-primary me-2">Simpan</button>
+                            @endif
+                            <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">Kembali</a>
                         </div>
                     </form>
                 </div>

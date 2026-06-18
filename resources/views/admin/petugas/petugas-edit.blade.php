@@ -60,8 +60,6 @@
                                     <option value="">-- Pilih Role --</option>
                                     <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
                                     <option value="ahli_gizi" {{ old('role', $user->role) === 'ahli_gizi' ? 'selected' : '' }}>Ahli Gizi</option>
-                                    <option value="medical_record" {{ old('role', $user->role) === 'medical_record' ? 'selected' : '' }}>Medical Record</option>
-                                    <option value="bendahara" {{ old('role', $user->role) === 'bendahara' ? 'selected' : '' }}>Bendahara</option>
                                 </select>
                                 @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>

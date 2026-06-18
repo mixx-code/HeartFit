@@ -93,13 +93,9 @@
                 @if(auth()->user()->role === 'superadmin')
                   <option value="admin" {{ old('role')==='admin'?'selected':'' }}>Admin</option>
                   <option value="ahli_gizi" {{ old('role')==='ahli_gizi'?'selected':'' }}>Ahli Gizi</option>
-                  <option value="medical_record" {{ old('role')==='medical_record'?'selected':'' }}>Medical Record</option>
-                  <option value="bendahara" {{ old('role')==='bendahara'?'selected':'' }}>Bendahara</option>
                 @else
                   {{-- Admin hanya bisa membuat role tertentu --}}
                   <option value="ahli_gizi" {{ old('role')==='ahli_gizi'?'selected':'' }}>Ahli Gizi</option>
-                  <option value="medical_record" {{ old('role')==='medical_record'?'selected':'' }}>Medical Record</option>
-                  <option value="bendahara" {{ old('role')==='bendahara'?'selected':'' }}>Bendahara</option>
                 @endif
               </select>
               @error('role')<div class="invalid-feedback">{{ $message }}</div>@enderror
