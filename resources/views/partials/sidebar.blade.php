@@ -42,29 +42,31 @@
         {{-- ========================= --}}
         {{-- ADMIN ONLY                --}}
         {{-- ========================= --}}
-        @if ($isAuth && $role === 'admin' || $role === 'superadmin')
-            <li class="menu-header small text-uppercase"><span class="menu-header-text">Data Users</span></li>
+        @if ($isAuth && ($role === 'admin' || $role === 'superadmin'))
+            @if ($role === 'superadmin')
+                <li class="menu-header small text-uppercase"><span class="menu-header-text">Data Users</span></li>
 
-            <li
-                class="menu-item {{ request()->routeIs('admin.data.petugas*', 'admin.data.customers*', 'admin.data.customer*') ? 'active open' : '' }}">
-                <a href="javascript:void(0);" class="menu-link menu-toggle">
-                    <i class="menu-icon tf-icons bx bx-table"></i>
-                    <div data-i18n="data">Data User</div>
-                </a>
-                <ul class="menu-sub">
-                    <li class="menu-item {{ request()->routeIs('admin.data.petugas*') ? 'active' : '' }}">
-                        <a href="{{ route('admin.data.petugas') }}" class="menu-link">
-                            <div data-i18n="Without menu">Petugas/Admin</div>
-                        </a>
-                    </li>
-                    <li
-                        class="menu-item {{ request()->routeIs('admin.data.customers*', 'admin.data.customer*') ? 'active' : '' }}">
-                        <a href="{{ route('admin.data.customers') }}" class="menu-link">
-                            <div data-i18n="Without menu">Customers</div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
+                <li
+                    class="menu-item {{ request()->routeIs('admin.data.petugas*', 'admin.data.customers*', 'admin.data.customer*') ? 'active open' : '' }}">
+                    <a href="javascript:void(0);" class="menu-link menu-toggle">
+                        <i class="menu-icon tf-icons bx bx-table"></i>
+                        <div data-i18n="data">Data User</div>
+                    </a>
+                    <ul class="menu-sub">
+                        <li class="menu-item {{ request()->routeIs('admin.data.petugas*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.data.petugas') }}" class="menu-link">
+                                <div data-i18n="Without menu">Petugas/Admin</div>
+                            </a>
+                        </li>
+                        <li
+                            class="menu-item {{ request()->routeIs('admin.data.customers*', 'admin.data.customer*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.data.customers') }}" class="menu-link">
+                                <div data-i18n="Without menu">Customers</div>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            @endif
 
             <li class="menu-header small text-uppercase"><span class="menu-header-text">Package/Menu</span></li>
             <li

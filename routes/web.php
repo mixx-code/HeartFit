@@ -123,14 +123,16 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::view('/admin/products/add', 'admin.products.addPaketMakanan')
             ->name('admin.products.add');
 
-        // Data Petugas/Admin
-        Route::get('/admin/data/petugas', [PetugasController::class, 'index'])->name('admin.data.petugas');
-        Route::get('/admin/data/petugas/create', [PetugasController::class, 'create'])->name('admin.data.petugas.create');
-        Route::post('/admin/data/petugas/create', [PetugasController::class, 'store'])->name('admin.data.petugas.store');
-        Route::get('/admin/data/petugas/detail/{user}', [PetugasController::class, 'show'])->name('admin.data.petugas.detail');
-        Route::get('/admin/data/petugas/edit/{user}', [PetugasController::class, 'edit'])->name('admin.data.petugas.edit');
-        Route::put('/admin/data/petugas/detail/{user}', [PetugasController::class, 'update'])->name('admin.data.petugas.update');
-        Route::delete('/admin/data/petugas/{user}', [PetugasController::class, 'destroy'])->name('admin.data.petugas.delete');
+        // Data Petugas/Admin — superadmin only
+        Route::middleware('role:superadmin')->group(function () {
+            Route::get('/admin/data/petugas', [PetugasController::class, 'index'])->name('admin.data.petugas');
+            Route::get('/admin/data/petugas/create', [PetugasController::class, 'create'])->name('admin.data.petugas.create');
+            Route::post('/admin/data/petugas/create', [PetugasController::class, 'store'])->name('admin.data.petugas.store');
+            Route::get('/admin/data/petugas/detail/{user}', [PetugasController::class, 'show'])->name('admin.data.petugas.detail');
+            Route::get('/admin/data/petugas/edit/{user}', [PetugasController::class, 'edit'])->name('admin.data.petugas.edit');
+            Route::put('/admin/data/petugas/detail/{user}', [PetugasController::class, 'update'])->name('admin.data.petugas.update');
+            Route::delete('/admin/data/petugas/{user}', [PetugasController::class, 'destroy'])->name('admin.data.petugas.delete');
+        });
 
         // Superadmin only - create admin role
         Route::middleware('role:superadmin')->group(function () {
@@ -160,10 +162,10 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     });
 
     // =======================
-    // CUSTOMERS MANAGEMENT — akses: admin + superadmin + ahli_gizi + medical_record
+    // CUSTOMERS MANAGEMENT — akses: superadmin + ahli_gizi + medical_record
     // (SATU DEFINISI ROUTE SAJA)
     // =======================
-    Route::middleware('role:admin,superadmin,ahli_gizi,medical_record')->group(function () {
+    Route::middleware('role:superadmin,ahli_gizi,medical_record')->group(function () {
         Route::get('/admin/data/customers', [CustomerController::class, 'index'])->name('admin.data.customers');
         Route::get('/admin/data/customers/create', [CustomerController::class, 'create'])->name('admin.data.customers.create');
         Route::post('/admin/data/customers/create', [UserDetailController::class, 'store'])->name('admin.data.customers.create');
@@ -171,9 +173,9 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     });
 
     // =======================
-    // CUSTOMERS MANAGEMENT EDIT/DELETE — akses: admin + superadmin + medical_record ONLY
+    // CUSTOMERS MANAGEMENT EDIT/DELETE — akses: superadmin + medical_record ONLY
     // =======================
-    Route::middleware('role:admin,superadmin,medical_record')->group(function () {
+    Route::middleware('role:superadmin,medical_record')->group(function () {
         Route::put('/admin/data/customer/detail/{user_detail}', [UserDetailController::class, 'update'])->name('admin.user-details.update');
         Route::delete('/admin/data/customer/{user}', [UserController::class, 'destroy'])->name('admin.data.customer.delete');
     });
