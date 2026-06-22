@@ -15,9 +15,9 @@ class GenerateDailyDeliveryStatuses extends Command
         $tz   = 'Asia/Jakarta';
         $date = $this->option('date') ?: now($tz)->toDateString();
 
-        // Nama hari Indonesia & angka ISO (1=Senin..7=Minggu)
-        $hariNama  = now($tz)->locale('id')->isoFormat('dddd'); // "Senin", "Selasa", ...
-        $hariAngka = (int) now($tz)->isoWeekday();              // 1..7
+        // Nama hari Indonesia & tanggal dalam bulan
+        $hariNama   = now($tz)->locale('id')->isoFormat('dddd'); // "Senin", "Selasa", ...
+        $hariAngka  = (int) now($tz)->day;                       // 1..31 (tanggal bulan)
 
         /**
          * Subquery representative meal_package per batch:
