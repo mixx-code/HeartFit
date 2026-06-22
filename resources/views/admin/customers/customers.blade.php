@@ -92,7 +92,11 @@
                     
                     {{-- Edit & Delete hanya untuk admin, superadmin, medical_record --}}
                     @if(auth()->user()->role !== 'ahli_gizi')
-                      <a class="dropdown-item" href="#"><i class="bx bx-edit-alt me-1"></i> Edit</a>
+                      @if($c->detail)
+                        <a class="dropdown-item" href="{{ route('admin.data.customer.detail', $c->detail->id) }}#formCustomerEdit"><i class="bx bx-edit-alt me-1"></i> Edit</a>
+                      @else
+                        <a class="dropdown-item" href="#" onclick="alert('Customer belum memiliki detail data')"><i class="bx bx-edit-alt me-1"></i> Edit</a>
+                      @endif
                     @endif
 
                     {{-- DELETE --}}

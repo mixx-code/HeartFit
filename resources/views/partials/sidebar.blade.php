@@ -156,7 +156,7 @@
                     @else
                         {{-- Kalau sudah punya detail_user, arahkan ke halaman detail --}}
                         <li class="menu-item {{ request()->routeIs('customer.data.customer.detail') ? 'active' : '' }}">
-                            <a href="{{ route('customer.data.customer.detail', $userDetail->id) }}" class="menu-link">
+                            <a href="{{ route('customer.data.customer.detail') }}" class="menu-link">
                                 <div data-i18n="Input groups">Lihat Profil</div>
                             </a>
                         </li>

@@ -56,7 +56,7 @@
                     @endphp
 
                     <form id="formCustomerEdit" method="POST"
-                        action="{{ route('customer.akun.update', $detail->id) }}" enctype="multipart/form-data">
+                        action="{{ route('customer.akun.update') }}" enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
 

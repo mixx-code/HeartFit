@@ -218,9 +218,9 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
         Route::get('/customers/create',    [CustomerController::class, 'create'])->name('customers.create');
         Route::post('/customers',          [CustomerController::class, 'store'])->name('customers.store');
 
-        Route::get('/customer/akun/detail/{user_detail}', [UserDetailController::class, 'showAkun'])->name('customer.data.customer.detail');
+        Route::get('/customer/akun/detail', [UserDetailController::class, 'showAkun'])->name('customer.data.customer.detail');
 
-        Route::put('/customer/data/akun/detail/{user_detail}', [UserDetailController::class, 'updateAkun'])->name('customer.akun.update');
+        Route::put('/customer/data/akun/detail', [UserDetailController::class, 'updateAkun'])->name('customer.akun.update');
 
         Route::get('/customer/orders', [OrderController::class, 'index'])->name('customer.orders.index');
 

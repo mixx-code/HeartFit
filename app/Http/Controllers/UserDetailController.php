@@ -139,8 +139,14 @@ class UserDetailController extends Controller
             'fotoKtp'  => $fotoKtp,
         ]);
     }
-    public function showAkun(UserDetail $user_detail)
+    public function showAkun()
     {
+        $user_detail = Auth::user()->detail;
+
+        if (!$user_detail) {
+            return redirect()->route('customers.create');
+        }
+
         // ambil relasi user
         $user_detail->load('user:id,name,email,role,password');
 
@@ -253,8 +259,14 @@ class UserDetailController extends Controller
         return redirect()->route('admin.data.customer.detail')->with('status', 'Detail user berhasil diperbarui.');
     }
 
-    public function updateAkun(Request $request, UserDetail $user_detail)
+    public function updateAkun(Request $request)
     {
+        $user_detail = Auth::user()->detail;
+
+        if (!$user_detail) {
+            return redirect()->route('customers.create');
+        }
+
         // samakan rules dengan store:
         $data = $request->validate([
             'mr'               => ['required', 'string', 'max:50', 'unique:user_details,mr,' . $user_detail->id],

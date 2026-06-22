@@ -18,3 +18,5 @@
 ### Fixed
 - Bug: customer baru (belum order) melihat status pengantaran milik customer lain
 - Bug: modal detail paket tidak terbuka karena JS error akibat elemen `modalOrderBtn` tidak ada di DOM
+- Bug: tombol Edit di list customer tidak berfungsi (href="#")
+- Security: halaman profil customer tidak memvalidasi kepemilikan — customer bisa akses profil orang lain dengan mengubah ID di URL; route profil diubah tanpa parameter ID, controller selalu load dari `Auth::user()->detail`
