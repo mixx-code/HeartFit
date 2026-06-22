@@ -26,15 +26,16 @@ class DashboardCustomerController extends Controller
             $menuNames = is_array($activeOrder->unique_menus) ? $activeOrder->unique_menus : [];
             $menuIds   = \App\Models\MenuMakanan::whereIn('nama_menu', $menuNames)->pluck('id')->toArray();
 
+            $serviceDates = is_array($activeOrder->service_dates) ? $activeOrder->service_dates : [];
+
             $items = \App\Models\OrderDeliveryStatus::with(['mealPackage', 'menuMakanan'])
                 ->where('batch', $activeOrder->package_batch)
                 ->whereIn('menu_makanan_id', $menuIds)
                 ->whereDate('delivery_date', $date)
+                ->whereIn('delivery_date', $serviceDates)
                 ->orderByRaw("FIELD(status_siang, 'pending','sedang dikirim','sampai','gagal dikirim')")
                 ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
                 ->get();
-
-            $serviceDates = is_array($activeOrder->service_dates) ? $activeOrder->service_dates : [];
 
             $history = \App\Models\OrderDeliveryStatus::with(['menuMakanan'])
                 ->where('batch', $activeOrder->package_batch)
