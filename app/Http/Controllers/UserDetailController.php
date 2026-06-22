@@ -332,6 +332,84 @@ class UserDetailController extends Controller
 
 
 
+    public function showStaffProfile()
+    {
+        $user        = Auth::user();
+        $user_detail = $user->detail;
+        $fotoKtp     = null;
+
+        if ($user_detail && !empty($user_detail->foto_ktp_base64)) {
+            try {
+                $fotoKtp = $user_detail->foto_ktp_base64;
+            } catch (\Exception $e) {
+                $fotoKtp = null;
+            }
+        }
+
+        return view('staff.profil', compact('user_detail', 'fotoKtp'));
+    }
+
+    public function updateStaffProfile(Request $request)
+    {
+        $user        = Auth::user();
+        $user_detail = $user->detail;
+        $detailId    = $user_detail?->id ?? 0;
+
+        $data = $request->validate([
+            'name'            => ['required', 'string', 'max:255'],
+            'email'           => ['required', 'email', 'unique:users,email,' . $user->id],
+            'nik'             => ['nullable', 'string', 'max:32', 'unique:user_details,nik,' . $detailId],
+            'alamat'          => ['nullable', 'string'],
+            'jenis_kelamin'   => ['nullable', 'in:L,P'],
+            'tempat_lahir'    => ['nullable', 'string', 'max:100'],
+            'tanggal_lahir'   => ['nullable', 'date'],
+            'bb_tb'           => ['nullable', 'string', 'max:20'],
+            'foto_ktp'        => ['nullable', 'file', 'image', 'max:2048'],
+            'foto_ktp_base64' => ['nullable', 'string'],
+            'hp'              => ['nullable', 'string', 'max:30'],
+            'usia'            => ['nullable', 'integer', 'min:0', 'max:150'],
+        ]);
+
+        DB::transaction(function () use ($data, $request, $user, $user_detail) {
+            $user->update([
+                'name'       => $data['name'],
+                'email'      => $data['email'],
+                'updated_by' => $user->id,
+            ]);
+
+            $payload = collect($data)->except(['name', 'email', 'foto_ktp'])->toArray();
+            $payload['updated_by'] = $user->id;
+
+            $newBase64 = null;
+            if ($request->hasFile('foto_ktp') && $request->file('foto_ktp')->isValid()) {
+                $mime      = $request->file('foto_ktp')->getMimeType();
+                $bin       = file_get_contents($request->file('foto_ktp')->getRealPath());
+                $newBase64 = 'data:' . $mime . ';base64,' . base64_encode($bin);
+            } elseif (!empty($data['foto_ktp_base64'])) {
+                $raw       = $data['foto_ktp_base64'];
+                $newBase64 = Str::startsWith($raw, 'data:') ? $raw : ('data:image/png;base64,' . $raw);
+            }
+
+            if (!is_null($newBase64)) {
+                $payload['foto_ktp_base64'] = $newBase64;
+            } else {
+                unset($payload['foto_ktp_base64']);
+            }
+
+            if ($user_detail) {
+                $user_detail->update($payload);
+            } else {
+                $mrService = app(MRGeneratorService::class);
+                $payload['mr']         = $mrService->generate();
+                $payload['user_id']    = $user->id;
+                $payload['created_by'] = $user->id;
+                UserDetail::create($payload);
+            }
+        });
+
+        return redirect()->route('staff.profil')->with('status', 'Profil berhasil diperbarui.');
+    }
+
     public function destroy(UserDetail $user_detail)
     {
         $user_detail->delete();

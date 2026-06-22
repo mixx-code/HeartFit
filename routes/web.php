@@ -205,6 +205,14 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     });
 
     // =======================
+    // DATA SAYA — akses: admin + superadmin + ahli_gizi
+    // =======================
+    Route::middleware('role:admin,superadmin,ahli_gizi')->group(function () {
+        Route::get('/staff/profil', [UserDetailController::class, 'showStaffProfile'])->name('staff.profil');
+        Route::put('/staff/profil', [UserDetailController::class, 'updateStaffProfile'])->name('staff.profil.update');
+    });
+
+    // =======================
     // MENU MAKANAN — akses: admin + ahli_gizi
     // (SATU DEFINISI ROUTE SAJA)
     // =======================

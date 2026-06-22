@@ -138,6 +138,19 @@
 
 
         {{-- ========================= --}}
+        {{-- DATA SAYA — admin, superadmin, ahli_gizi --}}
+        {{-- ========================= --}}
+        @if ($isAuth && in_array($role, ['admin', 'superadmin', 'ahli_gizi']))
+            <li class="menu-header small text-uppercase"><span class="menu-header-text">Akun</span></li>
+            <li class="menu-item {{ request()->routeIs('staff.profil') ? 'active' : '' }}">
+                <a href="{{ route('staff.profil') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-user-circle"></i>
+                    <div data-i18n="Data Saya">Data Saya</div>
+                </a>
+            </li>
+        @endif
+
+        {{-- ========================= --}}
         {{-- CUSTOMER ONLY             --}}
         {{-- ========================= --}}
         @if ($isAuth && $role === 'customer')
