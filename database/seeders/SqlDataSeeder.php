@@ -120,9 +120,7 @@ class SqlDataSeeder extends Seeder
         // id=2 : hari ini (2026-06-22) → ditampilkan di card "Status Hari Ini"
         // id=3–26: riwayat pengantaran 2026-05-24 s/d 2026-06-16 (semua service dates order #1)
         DB::table('order_delivery_statuses')->insert([
-            ['id'=>1, 'meal_package_id'=>1,'menu_makanan_id'=>6,'batch'=>'I','delivery_date'=>'2026-05-23','status_siang'=>'sampai','status_malam'=>'sampai','confirmed_by'=>6,'confirmed_at'=>'2026-05-23 14:15:45','note'=>null,'created_at'=>'2026-05-23 14:14:17','updated_at'=>'2026-05-23 07:15:45'],
-            ['id'=>2, 'meal_package_id'=>4,'menu_makanan_id'=>2,'batch'=>'I','delivery_date'=>'2026-06-22','status_siang'=>'sampai','status_malam'=>'sampai','confirmed_by'=>6,'confirmed_at'=>'2026-06-22 20:00:00','note'=>null,'created_at'=>'2026-06-22 07:00:00','updated_at'=>'2026-06-22 20:00:00'],
-            // --- Riwayat Pengantaran (2026-05-24 s/d 2026-06-16) ---
+            // --- Riwayat Pengantaran customer1 (2026-05-24 s/d 2026-06-16) ---
             // Menu ditentukan dari hari-dalam-bulan sesuai serve_days tiap menu Batch I
             ['id'=>3,  'meal_package_id'=>4,'menu_makanan_id'=>4, 'batch'=>'I','delivery_date'=>'2026-05-24','status_siang'=>'sampai','status_malam'=>'sampai','confirmed_by'=>6,'confirmed_at'=>'2026-05-24 20:00:00','note'=>null,'created_at'=>'2026-05-24 07:00:00','updated_at'=>'2026-05-24 20:00:00'],
             ['id'=>4,  'meal_package_id'=>4,'menu_makanan_id'=>5, 'batch'=>'I','delivery_date'=>'2026-05-25','status_siang'=>'sampai','status_malam'=>'sampai','confirmed_by'=>6,'confirmed_at'=>'2026-05-25 20:00:00','note'=>null,'created_at'=>'2026-05-25 07:00:00','updated_at'=>'2026-05-25 20:00:00'],
