@@ -10,7 +10,7 @@
         <small class="text-muted float-end">Lengkapi data berikut</small>
       </div>
       <div class="card-body">
-        <form id="customerForm" method="POST" action="{{ route('admin.data.customers.create') }}">
+        <form id="customerForm" method="POST" action="{{ route('admin.data.customers.store') }}">
           @csrf
 
           {{-- === Data Akun (harus ada, sesuai store()) === --}}

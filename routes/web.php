@@ -176,7 +176,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     Route::middleware('role:superadmin,ahli_gizi,medical_record')->group(function () {
         Route::get('/admin/data/customers', [CustomerController::class, 'index'])->name('admin.data.customers');
         Route::get('/admin/data/customers/create', [CustomerController::class, 'create'])->name('admin.data.customers.create');
-        Route::post('/admin/data/customers/create', [UserDetailController::class, 'store'])->name('admin.data.customers.create');
+        Route::post('/admin/data/customers/create', [UserDetailController::class, 'store'])->name('admin.data.customers.store');
         Route::get('/admin/data/customer/detail/{user_detail}', [UserDetailController::class, 'show'])->name('admin.data.customer.detail');
     });
 
