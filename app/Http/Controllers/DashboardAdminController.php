@@ -46,7 +46,19 @@ class DashboardAdminController extends Controller
             'total' => $total
         ];
 
-        return view('admin.dashboard', compact('items', 'date', 'agg', 'history'));
+        $delivered  = $items->where('status_siang', 'sampai')->count() + $items->where('status_malam', 'sampai')->count();
+        $totalSlots = $items->count() * 2;
+        $kpi = [
+            'orders_today'    => \App\Models\Order::where('status', 'PAID')
+                                    ->whereJsonContains('service_dates', $date)
+                                    ->count(),
+            'delivered'       => $delivered,
+            'delivered_pct'   => $totalSlots > 0 ? round($delivered / $totalSlots * 100) : 0,
+            'shipping'        => $items->where('status_siang', 'sedang dikirim')->count() + $items->where('status_malam', 'sedang dikirim')->count(),
+            'failed'          => $items->where('status_siang', 'gagal dikirim')->count() + $items->where('status_malam', 'gagal dikirim')->count(),
+        ];
+
+        return view('admin.dashboard', compact('items', 'date', 'agg', 'history', 'kpi'));
     }
 
     public function updateStatus(Request $request, OrderDeliveryStatus $delivery)
