@@ -15,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         // Alias route middleware (ganti Kernel::routeMiddleware)
         $middleware->alias([
             // Pakai middleware bawaan Laravel:
