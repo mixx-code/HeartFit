@@ -22,6 +22,12 @@ class DashboardSuperadminController extends Controller
             ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
             ->get();
 
+        // Riwayat pengantaran (semua delivery sebelum tanggal dipilih)
+        $history = OrderDeliveryStatus::with(['mealPackage', 'menuMakanan', 'confirmer'])
+            ->whereDate('delivery_date', '<', $date)
+            ->orderByDesc('delivery_date')
+            ->get();
+
         // Ahli gizi section
         $q       = $request->input('q');
         $perPage = (int) $request->input('per_page', 10);
@@ -55,6 +61,6 @@ class DashboardSuperadminController extends Controller
                 ->count(),
         ];
 
-        return view('superadmin.dashboard', compact('items', 'date', 'orders', 'perPage', 'summary'));
+        return view('superadmin.dashboard', compact('items', 'date', 'orders', 'perPage', 'summary', 'history'));
     }
 }

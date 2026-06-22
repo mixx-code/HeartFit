@@ -164,7 +164,70 @@
     </div>
 
     {{-- =========================================
-         SECTION 2: AHLI GIZI (summary + orders)
+         SECTION 2: RIWAYAT PENGANTARAN
+    ========================================= --}}
+    @if($history->count() > 0)
+    <div class="card shadow border-0 mb-4">
+        <div class="card-header fw-semibold text-white d-flex align-items-center gap-2" style="background-color:#5DD64C;">
+            <i class="bx bx-history fs-5"></i> Riwayat Pengantaran
+            <span class="badge bg-white text-dark ms-auto">{{ $history->count() }} data</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Tanggal</th>
+                            <th>Paket</th>
+                            <th>Menu</th>
+                            <th>Batch</th>
+                            <th class="text-center">Status Siang</th>
+                            <th class="text-center">Status Malam</th>
+                            <th>Dikonfirmasi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($history as $h)
+                        @php
+                            $hBadge = fn($s) => match(strtolower($s ?? '')) {
+                                'sampai'         => 'success',
+                                'gagal dikirim'  => 'danger',
+                                'sedang dikirim' => 'warning text-dark',
+                                'diproses'       => 'info',
+                                default          => 'secondary',
+                            };
+                        @endphp
+                        <tr>
+                            <td class="ps-3 fw-semibold">
+                                {{ \Carbon\Carbon::parse($h->delivery_date)->locale('id')->isoFormat('D MMM Y') }}
+                            </td>
+                            <td>{{ $h->mealPackage->nama_meal_package ?? '-' }}</td>
+                            <td>{{ $h->menuMakanan->nama_menu ?? '-' }}</td>
+                            <td><span class="badge bg-label-secondary">{{ $h->batch }}</span></td>
+                            <td class="text-center">
+                                <span class="badge bg-{{ $hBadge($h->status_siang) }}">{{ ucfirst($h->status_siang) }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-{{ $hBadge($h->status_malam) }}">{{ ucfirst($h->status_malam) }}</span>
+                            </td>
+                            <td class="small text-muted">
+                                @if($h->confirmer)
+                                    <i class="bx bx-check-shield text-success me-1"></i>{{ $h->confirmer->name }}
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- =========================================
+         SECTION 3: AHLI GIZI (summary + orders)
     ========================================= --}}
     <hr class="my-4">
     <h5 class="mb-3">Ringkasan & Data Order</h5>
