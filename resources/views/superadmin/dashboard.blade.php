@@ -186,7 +186,7 @@
                             <th>Dikonfirmasi</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="riwayat-tbody-superadmin">
                         @foreach($history as $h)
                         @php
                             $hBadge = fn($s) => match(strtolower($s ?? '')) {
@@ -221,6 +221,13 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="d-flex align-items-center justify-content-between px-3 py-2 border-top" id="riwayat-pagination-superadmin">
+                <small class="text-muted" id="riwayat-info-superadmin"></small>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-secondary" id="riwayat-prev-superadmin" onclick="riwayatPage('superadmin',-1)">&#8592; Sebelumnya</button>
+                    <button class="btn btn-sm btn-outline-secondary" id="riwayat-next-superadmin" onclick="riwayatPage('superadmin',1)">Selanjutnya &#8594;</button>
+                </div>
             </div>
         </div>
     </div>
@@ -400,3 +407,35 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    const _riwayatState = {};
+    function initRiwayat(key, perPage) {
+        const tbody = document.getElementById('riwayat-tbody-' + key);
+        if (!tbody) return;
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const totalPages = Math.ceil(rows.length / perPage);
+        _riwayatState[key] = { rows, perPage, page: 1, totalPages };
+        if (totalPages <= 1) {
+            document.getElementById('riwayat-pagination-' + key)?.classList.add('d-none');
+            return;
+        }
+        renderRiwayat(key);
+    }
+    function renderRiwayat(key) {
+        const { rows, perPage, page, totalPages } = _riwayatState[key];
+        const start = (page - 1) * perPage;
+        rows.forEach((r, i) => r.style.display = (i >= start && i < start + perPage) ? '' : 'none');
+        document.getElementById('riwayat-info-' + key).textContent = `Halaman ${page} dari ${totalPages}`;
+        document.getElementById('riwayat-prev-' + key).disabled = page <= 1;
+        document.getElementById('riwayat-next-' + key).disabled = page >= totalPages;
+    }
+    function riwayatPage(key, dir) {
+        const s = _riwayatState[key];
+        s.page = Math.min(Math.max(s.page + dir, 1), s.totalPages);
+        renderRiwayat(key);
+    }
+    document.addEventListener('DOMContentLoaded', () => initRiwayat('superadmin', 5));
+</script>
+@endpush
