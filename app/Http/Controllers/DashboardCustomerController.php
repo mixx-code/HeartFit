@@ -34,9 +34,12 @@ class DashboardCustomerController extends Controller
                 ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
                 ->get();
 
+            $serviceDates = is_array($activeOrder->service_dates) ? $activeOrder->service_dates : [];
+
             $history = \App\Models\OrderDeliveryStatus::with(['menuMakanan'])
                 ->where('batch', $activeOrder->package_batch)
                 ->whereIn('menu_makanan_id', $menuIds)
+                ->whereIn('delivery_date', $serviceDates)
                 ->whereDate('delivery_date', '<', $date)
                 ->orderByDesc('delivery_date')
                 ->get();
