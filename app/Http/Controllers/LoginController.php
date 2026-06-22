@@ -41,7 +41,10 @@ class LoginController extends Controller
         if ($role === 'ahli_gizi') {
             return redirect()->route('ahli_gizi.orders')->with('status', 'Selamat datang!');
         }
-        $adminRoles = ['admin', 'superadmin', 'kurir'];
+        if ($role === 'superadmin') {
+            return redirect()->route('dashboard.superadmin')->with('status', 'Selamat datang!');
+        }
+        $adminRoles = ['admin', 'kurir'];
         return in_array($role, $adminRoles)
             ? redirect()->route('dashboard.admin')->with('status', 'Selamat datang!')
             : redirect()->route('dashboard.customer')->with('status', 'Selamat datang!');

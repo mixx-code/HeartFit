@@ -20,13 +20,18 @@
     <ul class="menu-inner py-1">
         {{-- Dashboard --}}
         <li
-            class="menu-item {{ request()->routeIs('dashboard.admin') || request()->routeIs('dashboard.customer') || request()->routeIs('ahli_gizi.orders') ? 'active' : '' }}">
+            class="menu-item {{ request()->routeIs('dashboard.admin') || request()->routeIs('dashboard.superadmin') || request()->routeIs('dashboard.customer') || request()->routeIs('ahli_gizi.orders') ? 'active' : '' }}">
             @if ($isAuth && $role === 'ahli_gizi')
                 <a href="{{ route('ahli_gizi.orders') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-home-circle"></i>
                     <div data-i18n="Analytics">Dashboard</div>
                 </a>
-            @elseif ($isAuth && ($role === 'admin' || $role === 'superadmin' || $role === 'kurir'))
+            @elseif ($isAuth && $role === 'superadmin')
+                <a href="{{ route('dashboard.superadmin') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-home-circle"></i>
+                    <div data-i18n="Analytics">Dashboard</div>
+                </a>
+            @elseif ($isAuth && ($role === 'admin' || $role === 'kurir'))
                 <a href="{{ route('dashboard.admin') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-home-circle"></i>
                     <div data-i18n="Analytics">Dashboard</div>

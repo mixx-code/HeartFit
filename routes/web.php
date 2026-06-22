@@ -12,6 +12,7 @@ use App\Http\Controllers\MealPackagesController;
 use App\Http\Controllers\MenuMakananController;
 use App\Http\Controllers\PackageTypeController;
 use App\Http\Controllers\AhliGiziController;
+use App\Http\Controllers\DashboardSuperadminController;
 use App\Http\Controllers\PetugasController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserDetailController;
@@ -91,10 +92,17 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     // =======================
-    // ADMIN DASHBOARD — akses: admin | superadmin | kurir
+    // ADMIN DASHBOARD — akses: admin | kurir
     // =======================
-    Route::middleware('role:admin,superadmin,kurir')->group(function () {
+    Route::middleware('role:admin,kurir')->group(function () {
         Route::get('/dashboard/admin', [DashboardAdminController::class, 'index'])->name('dashboard.admin');
+    });
+
+    // =======================
+    // SUPERADMIN DASHBOARD — akses: superadmin (view-only)
+    // =======================
+    Route::middleware('role:superadmin')->group(function () {
+        Route::get('/dashboard/superadmin', [DashboardSuperadminController::class, 'index'])->name('dashboard.superadmin');
     });
 
     // =======================
@@ -108,7 +116,7 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
     // =======================
     // DELIVERY — akses dikontrol penuh oleh config/settings.json
     // =======================
-    Route::middleware('role:admin,superadmin,kurir')->group(function () {
+    Route::middleware('role:admin,kurir')->group(function () {
         Route::patch('/admin/deliveries/{delivery}/update-status', [DashboardAdminController::class, 'updateStatus'])
             ->name('admin.deliveries.updateStatus');
         Route::post('/admin/deliveries/generate', [DashboardAdminController::class, 'generateDelivery'])
