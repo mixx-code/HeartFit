@@ -22,6 +22,12 @@ class DashboardAdminController extends Controller
             ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
             ->get();
 
+        // Riwayat pengantaran (semua delivery sebelum tanggal dipilih)
+        $history = OrderDeliveryStatus::with(['mealPackage', 'menuMakanan', 'confirmer'])
+            ->whereDate('delivery_date', '<', $date)
+            ->orderByDesc('delivery_date')
+            ->get();
+
         // agregasi (biar ada ringkasan cepat, kamu suka %)
         $total = max(1, $items->count());
         $agg = [
@@ -40,7 +46,7 @@ class DashboardAdminController extends Controller
             'total' => $total
         ];
 
-        return view('admin.dashboard', compact('items', 'date', 'agg'));
+        return view('admin.dashboard', compact('items', 'date', 'agg', 'history'));
     }
 
     public function updateStatus(Request $request, OrderDeliveryStatus $delivery)
