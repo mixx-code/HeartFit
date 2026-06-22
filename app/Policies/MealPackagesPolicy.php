@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
-use App\Models\mealPackages;
+use App\Models\MealPackages;
 use Illuminate\Auth\Access\Response;
 
 class MealPackagesPolicy
@@ -19,7 +19,7 @@ class MealPackagesPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, mealPackages $mealPackages): bool
+    public function view(User $user, MealPackages $mealPackages): bool
     {
         return false;
     }
@@ -35,7 +35,7 @@ class MealPackagesPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, mealPackages $mealPackages): bool
+    public function update(User $user, MealPackages $mealPackages): bool
     {
         return false;
     }
@@ -43,7 +43,7 @@ class MealPackagesPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, mealPackages $mealPackages): bool
+    public function delete(User $user, MealPackages $mealPackages): bool
     {
         return false;
     }
@@ -51,7 +51,7 @@ class MealPackagesPolicy
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, mealPackages $mealPackages): bool
+    public function restore(User $user, MealPackages $mealPackages): bool
     {
         return false;
     }
@@ -59,7 +59,7 @@ class MealPackagesPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, mealPackages $mealPackages): bool
+    public function forceDelete(User $user, MealPackages $mealPackages): bool
     {
         return false;
     }

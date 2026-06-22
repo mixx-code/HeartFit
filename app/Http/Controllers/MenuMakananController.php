@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\menuMakanan;
+use App\Models\MenuMakanan;
 use Illuminate\Support\Arr;
 use App\Http\Requests\UpdatemenuMakananRequest;
 use Illuminate\Http\Request;
@@ -170,7 +170,7 @@ class MenuMakananController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(menuMakanan $menuMakanan)
+    public function show(MenuMakanan $menuMakanan)
     {
         //
     }
