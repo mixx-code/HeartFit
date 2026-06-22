@@ -94,11 +94,6 @@
                                 <td>
                                     <span class="fw-semibold">{{ $o->user?->name ?? '—' }}</span>
                                     <div class="small text-muted">{{ $o->user?->email ?? '' }}</div>
-                                    @if(!empty($o->user?->detail?->alamat))
-                                        <div class="small text-muted">
-                                            <i class="bx bx-map-pin me-1"></i>{{ Str::limit($o->user->detail->alamat, 40) }}
-                                        </div>
-                                    @endif
                                     @if ($o->user && method_exists($o->user, 'trashed') && $o->user->trashed())
                                         <span class="badge bg-secondary">User dihapus</span>
                                     @endif

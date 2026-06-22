@@ -128,14 +128,7 @@
                         @forelse($orders as $order)
                             <tr>
                                 <td>{{ $order->order_number }}</td>
-                                <td>
-                                    <span class="fw-semibold">{{ $order->user->name }}</span>
-                                    @if($order->user->detail?->alamat)
-                                        <div class="small text-muted">
-                                            <i class="bx bx-map-pin me-1"></i>{{ Str::limit($order->user->detail->alamat, 40) }}
-                                        </div>
-                                    @endif
-                                </td>
+                                <td><span class="fw-semibold">{{ $order->user->name }}</span></td>
                                 <td>{{ $order->user->email }}</td>
                                 <td>{{ $order->package_label }}</td>
                                 <td>

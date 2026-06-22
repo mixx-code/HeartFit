@@ -61,14 +61,7 @@
             @endphp
             <tr>
               <td class="fw-semibold">{{ $o->order_number }}</td>
-              <td>
-                <span class="fw-semibold">{{ auth()->user()->name }}</span>
-                @if(auth()->user()->detail?->alamat)
-                    <div class="small text-muted">
-                        <i class="bx bx-map-pin me-1"></i>{{ Str::limit(auth()->user()->detail->alamat, 40) }}
-                    </div>
-                @endif
-              </td>
+              <td><span class="fw-semibold">{{ auth()->user()->name }}</span></td>
               <td>
                 {{ $o->package_label }}
                 <div class="small text-muted">{{ $o->package_category }}</div>
