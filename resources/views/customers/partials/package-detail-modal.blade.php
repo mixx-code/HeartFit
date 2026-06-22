@@ -236,12 +236,14 @@ $durations = [
                         <div id="modalMenus" class="menu-scroll-area">
                             </div>
 
+                        @if(!($hasActiveOrder ?? false))
                         <div class="mt-4">
                             <a href="{{ route('orders.create') }}" class="btn btn-primary w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center" id="modalOrderBtn" style="border-radius: 12px; transition: 0.3s;">
                                 <span id="modalOrderText">Pesan Sekarang</span>
                                 <i class="bx bx-right-arrow-alt ms-2 fs-4"></i>
                             </a>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -272,7 +274,8 @@ function openPackageModal(packageKey) {
     const header = document.getElementById('modalHeader');
     header.className = `modal-header text-white bg-${config.color}`;
     document.getElementById('modalIcon').className = `bx ${config.icon} text-${config.color}`;
-    document.getElementById('modalOrderBtn').style.backgroundColor = `var(--bs-${config.color})`;
+    const orderBtn = document.getElementById('modalOrderBtn');
+    if (orderBtn) orderBtn.style.backgroundColor = `var(--bs-${config.color})`;
     
     // 2. Update Text Content
     document.getElementById('modalTitle').textContent = `Detail Paket ${data.type}`;

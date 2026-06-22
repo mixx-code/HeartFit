@@ -14,13 +14,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // === ADMIN ===
+        // === SUPER ADMIN ===
         $admin = User::updateOrCreate(
             ['email' => 'superadmin@mail.com'],
             [
                 'name'     => 'superadmin',
                 'password' => Hash::make('superadmin123'),
-                'role'     => 'admin',
+                'role'     => 'superadmin',
             ]
         );
 
@@ -37,6 +37,33 @@ class DatabaseSeeder extends Seeder
                 'foto_ktp_base64' => null,
                 'hp'              => '081234567890',
                 'usia'            => 34,
+                'created_by'      => $admin->id,
+            ]
+        );
+
+        // === ADMIN ===
+        $adminUser = User::updateOrCreate(
+            ['email' => 'admin@mail.com'],
+            [
+                'name'     => 'admin',
+                'password' => Hash::make('admin123'),
+                'role'     => 'admin',
+            ]
+        );
+
+        UserDetail::updateOrCreate(
+            ['user_id' => $adminUser->id],
+            [
+                'mr'              => 'MR-006',
+                'nik'             => '3201123456789006',
+                'alamat'          => 'Jl. Raya Admin No.2',
+                'jenis_kelamin'   => 'L',
+                'tempat_lahir'    => 'Jakarta',
+                'tanggal_lahir'   => '1992-03-15',
+                'bb_tb'           => '68/170',
+                'foto_ktp_base64' => null,
+                'hp'              => '081211223344',
+                'usia'            => 33,
                 'created_by'      => $admin->id,
             ]
         );
@@ -64,60 +91,6 @@ class DatabaseSeeder extends Seeder
                 'foto_ktp_base64' => null,
                 'hp'              => '081298765432',
                 'usia'            => 29,
-                'created_by'      => $admin->id,
-            ]
-        );
-
-        // === MEDICAL RECORD ===
-        $medical = User::updateOrCreate(
-            ['email' => 'medical@mail.com'],
-            [
-                'name'     => 'medical_record',
-                'password' => Hash::make('medical123'),
-                'role'     => 'medical_record',
-            ]
-        );
-
-        UserDetail::updateOrCreate(
-            ['user_id' => $medical->id],
-            [
-                'mr'              => 'MR-003',
-                'nik'             => '3201123456789003',
-                'alamat'          => 'Jl. Sehat No.3',
-                'jenis_kelamin'   => 'L',
-                'tempat_lahir'    => 'Depok',
-                'tanggal_lahir'   => '1992-03-12',
-                'bb_tb'           => '68/172',
-                'foto_ktp_base64' => null,
-                'hp'              => '081311223344',
-                'usia'            => 33,
-                'created_by'      => $admin->id,
-            ]
-        );
-
-        // === BENDAHARA ===
-        $bendahara = User::updateOrCreate(
-            ['email' => 'bendahara@mail.com'],
-            [
-                'name'     => 'bendahara',
-                'password' => Hash::make('bendahara123'),
-                'role'     => 'bendahara',
-            ]
-        );
-
-        UserDetail::updateOrCreate(
-            ['user_id' => $bendahara->id],
-            [
-                'mr'              => 'MR-004',
-                'nik'             => '3201123456789004',
-                'alamat'          => 'Jl. Keuangan No.4',
-                'jenis_kelamin'   => 'P',
-                'tempat_lahir'    => 'Bogor',
-                'tanggal_lahir'   => '1991-07-22',
-                'bb_tb'           => '60/165',
-                'foto_ktp_base64' => null,
-                'hp'              => '081322334455',
-                'usia'            => 34,
                 'created_by'      => $admin->id,
             ]
         );

@@ -26,7 +26,7 @@
                     <i class="menu-icon tf-icons bx bx-home-circle"></i>
                     <div data-i18n="Analytics">Dashboard</div>
                 </a>
-            @elseif ($isAuth && ($role === 'admin' || $role === 'superadmin' || $role === 'bendahara' || $role === 'medical_record' || $role === 'kurir'))
+            @elseif ($isAuth && ($role === 'admin' || $role === 'superadmin' || $role === 'kurir'))
                 <a href="{{ route('dashboard.admin') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-home-circle"></i>
                     <div data-i18n="Analytics">Dashboard</div>
@@ -112,69 +112,9 @@
 
 
         {{-- ========================= --}}
-        {{-- MEDICAL RECORD ONLY       --}}
-        {{-- ========================= --}}
-        @if ($isAuth && $role === 'medical_record')
-            <li class="menu-header small text-uppercase"><span class="menu-header-text">Data Customers</span></li>
-            <li
-                class="menu-item {{ request()->routeIs('admin.data.customers*', 'admin.data.customer*') ? 'active open' : '' }}">
-                <a href="javascript:void(0);" class="menu-link menu-toggle">
-                    <i class="menu-icon tf-icons bx bx-table"></i>
-                    <div data-i18n="data">Customers</div>
-                </a>
-                <ul class="menu-sub">
-                    <li
-                        class="menu-item {{ request()->routeIs('admin.data.customers*', 'admin.data.customer*') ? 'active' : '' }}">
-                        <a href="{{ route('admin.data.customers') }}" class="menu-link">
-                            <div data-i18n="Without menu">List & Detail</div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-        @endif
-
-
-        {{-- ========================= --}}
-        {{-- BENDAHARA ONLY            --}}
-        {{-- ========================= --}}
-        @if ($isAuth && $role === 'bendahara')
-            <li class="menu-header small text-uppercase"><span class="menu-header-text">Orders</span></li>
-            <li class="menu-item {{ request()->routeIs('admin.orders.index') ? 'active open' : '' }}">
-                <a href="javascript:void(0);" class="menu-link menu-toggle">
-                    <i class="menu-icon tf-icons bx bx-receipt"></i>
-                    <div data-i18n="Form Elements">Orders</div>
-                </a>
-                <ul class="menu-sub">
-                    <li class="menu-item {{ request()->routeIs('admin.orders.index') ? 'active' : '' }}">
-                        <a href="{{ route('admin.orders.index') }}" class="menu-link">
-                            <div data-i18n="Input groups">List Orders</div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-        @endif
-
-
-        {{-- ========================= --}}
         {{-- AHLI GIZI ONLY            --}}
         {{-- ========================= --}}
         @if ($isAuth && $role === 'ahli_gizi')
-            <li class="menu-header small text-uppercase"><span class="menu-header-text">Data Customers</span></li>
-            <li
-                class="menu-item {{ request()->routeIs('admin.data.customers*', 'admin.data.customer*') ? 'active open' : '' }}">
-                <a href="javascript:void(0);" class="menu-link menu-toggle">
-                    <i class="menu-icon tf-icons bx bx-table"></i>
-                    <div data-i18n="data">Customers</div>
-                </a>
-                <ul class="menu-sub">
-                    <li
-                        class="menu-item {{ request()->routeIs('admin.data.customers*', 'admin.data.customer*') ? 'active' : '' }}">
-                        <a href="{{ route('admin.data.customers') }}" class="menu-link">
-                            <div data-i18n="Without menu">List Customers</div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
             <li class="menu-header small text-uppercase"><span class="menu-header-text">Orders</span></li>
             <li class="menu-item {{ request()->routeIs('admin.orders.index') ? 'active open' : '' }}">
                 <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -196,21 +136,6 @@
         {{-- CUSTOMER ONLY             --}}
         {{-- ========================= --}}
         @if ($isAuth && $role === 'customer')
-            <li class="menu-header small text-uppercase"><span class="menu-header-text">Orders</span></li>
-            <li class="menu-item {{ request()->routeIs('customer.orders.*') ? 'active open' : '' }}">
-                <a href="javascript:void(0);" class="menu-link menu-toggle">
-                    <i class="menu-icon tf-icons bx bx-cart"></i>
-                    <div data-i18n="Form Elements">Orders</div>
-                </a>
-                <ul class="menu-sub">
-                    <li class="menu-item {{ request()->routeIs('customer.orders.index') ? 'active' : '' }}">
-                        <a href="{{ route('customer.orders.index') }}" class="menu-link">
-                            <div data-i18n="Input groups">List Orders</div>
-                        </a>
-                    </li>
-                </ul>
-            </li>
-
             <li class="menu-header small text-uppercase">
                 <span class="menu-header-text">Profil</span>
             </li>

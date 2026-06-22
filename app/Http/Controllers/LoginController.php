@@ -38,7 +38,10 @@ class LoginController extends Controller
 
         // Arahkan ke dashboard sesuai role
         $role = Auth::user()->role ?? 'customer';
-        $adminRoles = ['admin', 'superadmin', 'ahli_gizi', 'bendahara', 'medical_record', 'kurir'];
+        if ($role === 'ahli_gizi') {
+            return redirect()->route('ahli_gizi.orders')->with('status', 'Selamat datang!');
+        }
+        $adminRoles = ['admin', 'superadmin', 'kurir'];
         return in_array($role, $adminRoles)
             ? redirect()->route('dashboard.admin')->with('status', 'Selamat datang!')
             : redirect()->route('dashboard.customer')->with('status', 'Selamat datang!');

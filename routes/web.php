@@ -91,9 +91,9 @@ Route::middleware(['auth', 'session.timeout'])->group(function () {
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     // =======================
-    // ADMIN DASHBOARD — akses: admin | superadmin | ahli_gizi | bendahara | medical_record | kurir
+    // ADMIN DASHBOARD — akses: admin | superadmin | kurir
     // =======================
-    Route::middleware('role:admin,superadmin,ahli_gizi,bendahara,medical_record,kurir')->group(function () {
+    Route::middleware('role:admin,superadmin,kurir')->group(function () {
         Route::get('/dashboard/admin', [DashboardAdminController::class, 'index'])->name('dashboard.admin');
     });
 

@@ -9,19 +9,6 @@
 @php
   use Illuminate\Support\Str;
   $row = $items->first();
-  
-  // Cek apakah customer memiliki order aktif (seperti logic navbar)
-  $hasActiveOrder = false;
-  if (auth()->check() && auth()->user()->role === 'customer') {
-    try {
-      $hasActiveOrder = \App\Models\Order::where('user_id', auth()->id())
-          ->where('status', 'PAID')
-          ->whereDate('end_date', '>=', \Carbon\Carbon::now())
-          ->exists();
-    } catch (\Exception $e) {
-      $hasActiveOrder = false;
-    }
-  }
 @endphp
 
 {{-- === STATUS PENGANTARAN (KONDISIONAL) === --}}

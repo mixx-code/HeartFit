@@ -17,11 +17,25 @@ class DashboardCustomerController extends Controller
         $tz   = 'Asia/Jakarta';
         $date = now($tz)->toDateString();
 
-        $items = \App\Models\OrderDeliveryStatus::with(['mealPackage', 'menuMakanan'])
-            ->whereDate('delivery_date', $date)
-            ->orderByRaw("FIELD(status_siang, 'pending','sedang dikirim','sampai','gagal dikirim')")
-            ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
-            ->get();
+        $activeOrder = \App\Models\Order::where('user_id', Auth::id())
+            ->where('status', 'PAID')
+            ->latest()
+            ->first();
+
+        if ($activeOrder) {
+            $menuNames = is_array($activeOrder->unique_menus) ? $activeOrder->unique_menus : [];
+            $menuIds   = \App\Models\MenuMakanan::whereIn('nama_menu', $menuNames)->pluck('id')->toArray();
+
+            $items = \App\Models\OrderDeliveryStatus::with(['mealPackage', 'menuMakanan'])
+                ->where('batch', $activeOrder->package_batch)
+                ->whereIn('menu_makanan_id', $menuIds)
+                ->whereDate('delivery_date', $date)
+                ->orderByRaw("FIELD(status_siang, 'pending','sedang dikirim','sampai','gagal dikirim')")
+                ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
+                ->get();
+        } else {
+            $items = collect();
+        }
 
         // Ambil data paket dari database dengan error handling
         try {
@@ -212,6 +226,10 @@ class DashboardCustomerController extends Controller
             }
         }
 
-        return view('customers.dashboard', compact('items', 'date', 'packages'));
+        $hasActiveOrder = \App\Models\Order::where('user_id', Auth::id())
+            ->where('status', 'PAID')
+            ->exists();
+
+        return view('customers.dashboard', compact('items', 'date', 'packages', 'hasActiveOrder'));
     }
 }
