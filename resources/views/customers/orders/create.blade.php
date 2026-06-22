@@ -530,7 +530,7 @@
                         </div>
 
                         {{-- NOMOR WHATSAPP --}}
-                        <div class="card border-0 shadow-sm mt-3" id="whatsappCard">
+                        <div class="card border-0 shadow-sm mt-3 d-none" id="whatsappCard">
                             <div class="card-body">
                                 <label for="orderWhatsapp" class="form-label fw-semibold">
                                     <i class="bx bxl-whatsapp me-2"></i>Nomor WhatsApp <span class="text-danger">*</span>
@@ -1108,6 +1108,27 @@ setHidden('hidUniqueMenuCount', names.length);
 setHidden('hidAmountTotal', amountTotal);
 }
 
+function isPremiumSelected() {
+  const id = getChosenKey();
+  if (!id || !PACKAGES[id]) return false;
+  return (PACKAGES[id].category ?? '').toLowerCase() === 'premium';
+}
+
+function updateWhatsappVisibility() {
+  const card  = document.getElementById('whatsappCard');
+  const input = document.getElementById('orderWhatsapp');
+  if (!card || !input) return;
+  if (isPremiumSelected()) {
+    card.classList.remove('d-none');
+    input.setAttribute('required', '');
+  } else {
+    card.classList.add('d-none');
+    input.removeAttribute('required');
+    input.value = '';
+    input.classList.remove('is-invalid');
+  }
+}
+
 // ====== EVENTS ======
 startDate.addEventListener('change',()=>{
   if(new Date(startDate.value) < new Date(toYMD(tomorrow))) startDate.value=toYMD(tomorrow);
@@ -1121,6 +1142,7 @@ document.querySelectorAll('input[name="package_key"]').forEach(radio=>{
   radio.addEventListener('change',()=>{
     document.querySelectorAll('.selectable-card').forEach(c=>c.classList.remove('border-primary','shadow'));
     const card = radio.closest('label')?.querySelector('.selectable-card'); if(card) card.classList.add('border-primary','shadow');
+    updateWhatsappVisibility();
     if(startDate.value){
       autoFillEndDate(); updatePeriodInfo();
       if(endDate.value) {
@@ -1150,13 +1172,14 @@ nextBtns.forEach(btn=>btn.addEventListener('click',()=>{
     startDate.classList.remove('is-invalid'); endDate.classList.remove('is-invalid');
     fillSummary();
     showStep(3);
+    updateWhatsappVisibility();
   } else if(current===3){
     const notesEl = document.getElementById('orderNotes');
     const waEl = document.getElementById('orderWhatsapp');
     let step3Invalid = false;
     if (notesEl && !notesEl.value.trim()) { notesEl.classList.add('is-invalid'); step3Invalid = true; } else if (notesEl) { notesEl.classList.remove('is-invalid'); }
-    if (waEl && (!waEl.value.trim() || !/^62[0-9]{8,18}$/.test(waEl.value.trim()))) { waEl.classList.add('is-invalid'); step3Invalid = true; } else if (waEl) { waEl.classList.remove('is-invalid'); }
-    if (step3Invalid) { alert('Harap isi Catatan Khusus dan Nomor WhatsApp (harus diawali 62).'); return; }
+    if (isPremiumSelected() && waEl && (!waEl.value.trim() || !/^62[0-9]{8,18}$/.test(waEl.value.trim()))) { waEl.classList.add('is-invalid'); step3Invalid = true; } else if (waEl) { waEl.classList.remove('is-invalid'); }
+    if (step3Invalid) { alert('Harap lengkapi semua field yang wajib diisi.'); return; }
     showStep(4);
     const payChecked = document.querySelector('input[name="payment_method"]:checked');
     if (!payChecked) {
