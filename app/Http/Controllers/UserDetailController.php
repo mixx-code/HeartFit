@@ -336,17 +336,8 @@ class UserDetailController extends Controller
     {
         $user        = Auth::user();
         $user_detail = $user->detail;
-        $fotoKtp     = null;
 
-        if ($user_detail && !empty($user_detail->foto_ktp_base64)) {
-            try {
-                $fotoKtp = $user_detail->foto_ktp_base64;
-            } catch (\Exception $e) {
-                $fotoKtp = null;
-            }
-        }
-
-        return view('staff.profil', compact('user_detail', 'fotoKtp'));
+        return view('staff.profil', compact('user_detail'));
     }
 
     public function updateStaffProfile(Request $request)
@@ -364,8 +355,6 @@ class UserDetailController extends Controller
             'tempat_lahir'    => ['nullable', 'string', 'max:100'],
             'tanggal_lahir'   => ['nullable', 'date'],
             'bb_tb'           => ['nullable', 'string', 'max:20'],
-            'foto_ktp'        => ['nullable', 'file', 'image', 'max:2048'],
-            'foto_ktp_base64' => ['nullable', 'string'],
             'hp'              => ['nullable', 'string', 'max:30'],
             'usia'            => ['nullable', 'integer', 'min:0', 'max:150'],
         ]);
@@ -377,24 +366,8 @@ class UserDetailController extends Controller
                 'updated_by' => $user->id,
             ]);
 
-            $payload = collect($data)->except(['name', 'email', 'foto_ktp'])->toArray();
+            $payload = collect($data)->except(['name', 'email'])->toArray();
             $payload['updated_by'] = $user->id;
-
-            $newBase64 = null;
-            if ($request->hasFile('foto_ktp') && $request->file('foto_ktp')->isValid()) {
-                $mime      = $request->file('foto_ktp')->getMimeType();
-                $bin       = file_get_contents($request->file('foto_ktp')->getRealPath());
-                $newBase64 = 'data:' . $mime . ';base64,' . base64_encode($bin);
-            } elseif (!empty($data['foto_ktp_base64'])) {
-                $raw       = $data['foto_ktp_base64'];
-                $newBase64 = Str::startsWith($raw, 'data:') ? $raw : ('data:image/png;base64,' . $raw);
-            }
-
-            if (!is_null($newBase64)) {
-                $payload['foto_ktp_base64'] = $newBase64;
-            } else {
-                unset($payload['foto_ktp_base64']);
-            }
 
             if ($user_detail) {
                 $user_detail->update($payload);

@@ -48,14 +48,9 @@
                     }
                     $bb = old('berat_badan', trim($bb));
                     $tb = old('tinggi_badan', trim($tb));
-                    $srcKtp = null;
-                    if (!empty($fotoKtp)) {
-                        $srcKtp = \Illuminate\Support\Str::startsWith($fotoKtp, 'data:')
-                            ? $fotoKtp : 'data:image/png;base64,' . $fotoKtp;
-                    }
                 @endphp
 
-                <form id="formStaffEdit" method="POST" action="{{ route('staff.profil.update') }}" enctype="multipart/form-data">
+                <form id="formStaffEdit" method="POST" action="{{ route('staff.profil.update') }}">
                     @csrf
                     @method('PUT')
 
@@ -181,27 +176,6 @@
                         @error('usia')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
-                    {{-- === Foto KTP === --}}
-                    <hr class="my-4" />
-                    <h6 class="text-muted text-uppercase small mb-3">Foto KTP</h6>
-                    <div class="d-flex flex-column align-items-center mb-4 text-center">
-                        <img src="{{ $srcKtp ?? asset('assets/img/placeholder-id.png') }}"
-                             alt="Foto KTP" class="rounded border mb-3" height="200" width="320" id="previewKtp">
-                        <div class="button-wrapper">
-                            <label for="uploadKtp" class="btn btn-primary me-2 mb-2" tabindex="0">
-                                <span class="d-none d-sm-inline">Upload KTP</span>
-                                <i class="bx bx-upload d-inline d-sm-none"></i>
-                                <input type="file" id="uploadKtp" class="account-file-input" hidden
-                                    accept="image/png,image/jpeg" name="foto_ktp" form="formStaffEdit">
-                            </label>
-                            <button type="button" class="btn btn-outline-secondary mb-2" id="resetKtpBtn">
-                                <span class="d-none d-sm-inline">Reset</span>
-                                <i class="bx bx-reset d-inline d-sm-none"></i>
-                            </button>
-                            <p class="text-muted mb-0 small">JPG/PNG. Maks 2MB.</p>
-                        </div>
-                    </div>
-
                     <div class="text-end">
                         <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                     </div>
@@ -214,24 +188,6 @@
 
 @push('scripts')
 <script>
-    const upload    = document.getElementById('uploadKtp');
-    const preview   = document.getElementById('previewKtp');
-    const resetBtn  = document.getElementById('resetKtpBtn');
-    const origSrc   = preview?.src;
-
-    upload?.addEventListener('change', e => {
-        const f = e.target.files?.[0];
-        if (!f) return;
-        const reader = new FileReader();
-        reader.onload = () => preview.src = reader.result;
-        reader.readAsDataURL(f);
-    });
-
-    resetBtn?.addEventListener('click', () => {
-        preview.src = origSrc;
-        if (upload) upload.value = '';
-    });
-
     document.getElementById('formStaffEdit')?.addEventListener('submit', function () {
         const bb = document.getElementById('berat_badan')?.value?.trim();
         const tb = document.getElementById('tinggi_badan')?.value?.trim();
