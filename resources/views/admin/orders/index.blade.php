@@ -52,7 +52,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>No. Order</th>
-                            <th>User</th>
+                            <th>Nama Penerima</th>
                             <th>WhatsApp</th>
                             <th>Notes</th>
                             <th>Paket</th>
@@ -90,15 +90,18 @@
                                 {{-- No. Order --}}
                                 <td class="fw-semibold">{{ $o->order_number }}</td>
 
-                                {{-- User (name + email, info soft-deleted) --}}
+                                {{-- Nama Penerima --}}
                                 <td>
-                                    {{ $o->user?->name ?? '—' }}
-                                    <div class="small text-muted">
-                                        {{ $o->user?->email ?? '' }}
-                                        @if ($o->user && method_exists($o->user, 'trashed') && $o->user->trashed())
-                                            <br><span class="badge bg-secondary">User dihapus</span>
-                                        @endif
-                                    </div>
+                                    <span class="fw-semibold">{{ $o->user?->name ?? '—' }}</span>
+                                    <div class="small text-muted">{{ $o->user?->email ?? '' }}</div>
+                                    @if(!empty($o->user?->detail?->alamat))
+                                        <div class="small text-muted">
+                                            <i class="bx bx-map-pin me-1"></i>{{ Str::limit($o->user->detail->alamat, 40) }}
+                                        </div>
+                                    @endif
+                                    @if ($o->user && method_exists($o->user, 'trashed') && $o->user->trashed())
+                                        <span class="badge bg-secondary">User dihapus</span>
+                                    @endif
                                 </td>
 
                                 {{-- WhatsApp (dari tabel orders) --}}

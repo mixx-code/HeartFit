@@ -43,6 +43,7 @@
         <thead class="table-light">
           <tr>
             <th>No. Order</th>
+            <th>Nama Penerima</th>
             <th>Paket</th>
             <th>Periode</th>
             <th>Total</th>
@@ -60,6 +61,14 @@
             @endphp
             <tr>
               <td class="fw-semibold">{{ $o->order_number }}</td>
+              <td>
+                <span class="fw-semibold">{{ auth()->user()->name }}</span>
+                @if(auth()->user()->detail?->alamat)
+                    <div class="small text-muted">
+                        <i class="bx bx-map-pin me-1"></i>{{ Str::limit(auth()->user()->detail->alamat, 40) }}
+                    </div>
+                @endif
+              </td>
               <td>
                 {{ $o->package_label }}
                 <div class="small text-muted">{{ $o->package_category }}</div>
@@ -131,7 +140,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="7" class="text-center text-muted">
+              <td colspan="8" class="text-center text-muted">
                 Kamu Tidak Memiliki Order{{ request('q') ? ' untuk pencarian ini' : '' }}.
               </td>
             </tr>

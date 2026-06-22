@@ -44,11 +44,7 @@ class OrderController extends Controller
         $perPage = (int) request('per_page', 10);
 
         $orders = Order::query()
-            // eager-load user dan user.detail (hemat N+1)
-            ->with([
-                'user:id,name,email,deleted_at',// sesuaikan kolom di user_details-mu
-                'user.detail:id,user_id,hp,alamat', // tambahkan hp dan alamat
-            ])
+            ->with(['user', 'user.detail'])
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('order_number', 'like', "%{$q}%")
