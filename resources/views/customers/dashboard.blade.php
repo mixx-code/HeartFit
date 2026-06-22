@@ -209,6 +209,69 @@
   </div>
 @endif
 
+      {{-- RIWAYAT PENGANTARAN --}}
+      @if($hasActiveOrder && $history->count() > 0)
+      <div class="col-12">
+        <div class="card shadow border-0">
+          <div class="card-header fw-semibold text-white d-flex align-items-center gap-2" style="background-color:#5DD64C;">
+            <i class="bx bx-history fs-5"></i> Riwayat Pengantaran
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-3">Tanggal</th>
+                    <th>Menu</th>
+                    <th class="text-center">Status Siang</th>
+                    <th class="text-center">Status Malam</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @foreach($history as $h)
+                  @php
+                    $badgeColor = fn($s) => match(strtolower($s ?? '')) {
+                      'sampai'         => 'success',
+                      'gagal dikirim'  => 'danger',
+                      'sedang dikirim' => 'primary',
+                      'diproses'       => 'info',
+                      default          => 'secondary',
+                    };
+                    $icon = fn($s) => match(strtolower($s ?? '')) {
+                      'sampai'         => 'bx-check-circle',
+                      'gagal dikirim'  => 'bx-x-circle',
+                      'sedang dikirim' => 'bx-cycling',
+                      'diproses'       => 'bx-loader-alt',
+                      default          => 'bx-time',
+                    };
+                  @endphp
+                  <tr>
+                    <td class="ps-3">
+                      <span class="fw-semibold">{{ \Carbon\Carbon::parse($h->delivery_date)->locale('id')->isoFormat('D MMM Y') }}</span>
+                    </td>
+                    <td>{{ $h->menuMakanan->nama_menu ?? '-' }} <span class="text-secondary small">(Batch {{ $h->batch }})</span></td>
+                    <td class="text-center">
+                      <span class="badge bg-{{ $badgeColor($h->status_siang) }} d-inline-flex align-items-center gap-1">
+                        <i class="bx {{ $icon($h->status_siang) }}"></i>
+                        {{ ucfirst($h->status_siang) }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <span class="badge bg-{{ $badgeColor($h->status_malam) }} d-inline-flex align-items-center gap-1">
+                        <i class="bx {{ $icon($h->status_malam) }}"></i>
+                        {{ ucfirst($h->status_malam) }}
+                      </span>
+                    </td>
+                  </tr>
+                  @endforeach
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      @endif
+
       {{-- CTA PESAN (HANYA TAMPIL JIKA TIDAK ADA ORDER AKTIF) --}}
       @if(!$hasActiveOrder)
       <div class="col-md-6 col-lg-4">

@@ -33,8 +33,16 @@ class DashboardCustomerController extends Controller
                 ->orderByRaw("FIELD(status_siang, 'pending','sedang dikirim','sampai','gagal dikirim')")
                 ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
                 ->get();
+
+            $history = \App\Models\OrderDeliveryStatus::with(['menuMakanan'])
+                ->where('batch', $activeOrder->package_batch)
+                ->whereIn('menu_makanan_id', $menuIds)
+                ->whereDate('delivery_date', '<', $date)
+                ->orderByDesc('delivery_date')
+                ->get();
         } else {
-            $items = collect();
+            $items   = collect();
+            $history = collect();
         }
 
         // Ambil data paket dari database dengan error handling
@@ -230,6 +238,6 @@ class DashboardCustomerController extends Controller
             ->where('status', 'PAID')
             ->exists();
 
-        return view('customers.dashboard', compact('items', 'date', 'packages', 'hasActiveOrder'));
+        return view('customers.dashboard', compact('items', 'date', 'packages', 'hasActiveOrder', 'history'));
     }
 }
