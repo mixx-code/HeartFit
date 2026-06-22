@@ -21,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (!file_exists(public_path('storage'))) {
+            \Artisan::call('storage:link');
+        }
+
         View::composer('*', function ($view) {
             $user = Auth::user();
 
