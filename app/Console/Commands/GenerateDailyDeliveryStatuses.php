@@ -2,84 +2,81 @@
 
 namespace App\Console\Commands;
 
+use App\Models\MenuMakanan;
+use App\Models\Order;
+use App\Models\OrderDeliveryStatus;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class GenerateDailyDeliveryStatuses extends Command
 {
     protected $signature = 'heartfit:generate-delivery-statuses {--date=} {--all}';
-    protected $description = 'Generate pending (siang & malam) delivery rows per menu_makanan (1x per menu, bukan per meal_package)';
+    protected $description = 'Generate pending delivery rows per order aktif pada tanggal tertentu';
 
     public function handle()
     {
-        $tz   = 'Asia/Jakarta';
-        $date = $this->option('date') ?: now($tz)->toDateString();
+        $tz         = 'Asia/Jakarta';
+        $dateStr    = $this->option('date') ?: now($tz)->toDateString();
+        $dayOfMonth = (int) Carbon::parse($dateStr)->day;
 
-        // Nama hari Indonesia & tanggal dalam bulan
-        $hariNama   = now($tz)->locale('id')->isoFormat('dddd'); // "Senin", "Selasa", ...
-        $hariAngka  = (int) now($tz)->day;                       // 1..31 (tanggal bulan)
+        // Ambil semua order PAID yang service_dates-nya mengandung tanggal ini
+        $activeOrders = Order::where('status', 'PAID')
+            ->whereJsonContains('service_dates', $dateStr)
+            ->get(['id', 'meal_package_id', 'package_batch', 'unique_menus']);
 
-        /**
-         * Subquery representative meal_package per batch:
-         * satu id per batch (pakai MIN), untuk memenuhi FK meal_package_id
-         */
-        $mpPerBatch = DB::table('meal_packages')
-            ->selectRaw('batch, MIN(id) AS meal_package_id')
-            ->groupBy('batch');
-
-        // Base: 1 row per menu_makanan (join ke representative meal_package per batch)
-        $base = DB::table('menu_makanans as mm')
-            ->joinSub($mpPerBatch, 'mpb', function ($join) {
-                $join->on('mm.batch', '=', 'mpb.batch');
-            });
-
-        // Filter serve_days jika tidak --all
-        if (!$this->option('all')) {
-            $base->where(function ($q) use ($hariNama, $hariAngka) {
-                // serve_days bisa berisi ["Senin","Rabu"] ATAU [1,3,5]
-                $q->orWhereRaw('JSON_CONTAINS(mm.serve_days, JSON_QUOTE(?))', [$hariNama])
-                    ->orWhereRaw('JSON_CONTAINS(mm.serve_days, ?)', [json_encode($hariAngka)]);
-            });
+        if ($activeOrders->isEmpty()) {
+            $this->warn("{$dateStr} | Tidak ada order aktif.");
+            return self::SUCCESS;
         }
 
-        // SELECT kolom yang akan diinsert + NOT EXISTS untuk cegah duplikat per menu_makanan+tanggal
-        $select = $base->selectRaw(
-            'mpb.meal_package_id AS meal_package_id,
-             mm.id               AS menu_makanan_id,
-             mm.batch            AS batch,
-             ?                   AS delivery_date,
-             "pending"           AS status_siang,
-             "pending"           AS status_malam,
-             NULL                AS confirmed_by,
-             NULL                AS confirmed_at,
-             NULL                AS note,
-             NOW()               AS created_at,
-             NOW()               AS updated_at',
-            [$date]
-        )
-            ->whereNotExists(function ($sub) use ($date) {
-                $sub->from('order_delivery_statuses as ods')
-                    ->selectRaw('1')
-                    ->whereColumn('ods.menu_makanan_id', 'mm.id')
-                    ->where('ods.delivery_date', $date);
-            });
+        $inserted = 0;
+        $skipped  = 0;
 
-        // Eksekusi insertUsing: hasilnya 1 baris per menu_makanan (bukan per meal_package)
-        $inserted = DB::table('order_delivery_statuses')->insertUsing([
-            'meal_package_id',
-            'menu_makanan_id',
-            'batch',
-            'delivery_date',
-            'status_siang',
-            'status_malam',
-            'confirmed_by',
-            'confirmed_at',
-            'note',
-            'created_at',
-            'updated_at'
-        ], $select);
+        foreach ($activeOrders as $order) {
+            $batch     = $order->package_batch;
+            $menuNames = is_array($order->unique_menus) ? $order->unique_menus : [];
 
-        $this->info("{$date} | hari: {$hariNama} ({$hariAngka}) | inserted: {$inserted} (per menu_makanan)");
+            // Cari menu yang serve_days-nya mengandung tanggal hari ini
+            $query = MenuMakanan::where('batch', $batch)
+                ->whereIn('nama_menu', $menuNames);
+
+            if (!$this->option('all')) {
+                $query->whereJsonContains('serve_days', $dayOfMonth);
+            }
+
+            $menu = $query->first();
+
+            if (!$menu) {
+                $this->warn("Order #{$order->id}: tidak ada menu untuk hari ke-{$dayOfMonth} (batch {$batch})");
+                continue;
+            }
+
+            // Cegah duplikat: 1 record per (meal_package_id, menu_makanan_id, delivery_date)
+            $exists = OrderDeliveryStatus::where('meal_package_id', $order->meal_package_id)
+                ->where('menu_makanan_id', $menu->id)
+                ->where('delivery_date', $dateStr)
+                ->exists();
+
+            if ($exists) {
+                $skipped++;
+                continue;
+            }
+
+            OrderDeliveryStatus::create([
+                'meal_package_id' => $order->meal_package_id,
+                'menu_makanan_id' => $menu->id,
+                'batch'           => $batch,
+                'delivery_date'   => $dateStr,
+                'status_siang'    => 'pending',
+                'status_malam'    => 'pending',
+                'confirmed_by'    => null,
+                'confirmed_at'    => null,
+                'note'            => null,
+            ]);
+            $inserted++;
+        }
+
+        $this->info("{$dateStr} | day: {$dayOfMonth} | orders aktif: {$activeOrders->count()} | inserted: {$inserted} | skipped: {$skipped}");
         return self::SUCCESS;
     }
 }

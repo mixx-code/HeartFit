@@ -30,6 +30,7 @@ class DashboardCustomerController extends Controller
 
             $items = \App\Models\OrderDeliveryStatus::with(['mealPackage', 'menuMakanan'])
                 ->where('batch', $activeOrder->package_batch)
+                ->where('meal_package_id', $activeOrder->meal_package_id)
                 ->whereIn('menu_makanan_id', $menuIds)
                 ->whereDate('delivery_date', $date)
                 ->whereIn('delivery_date', $serviceDates)
@@ -39,6 +40,7 @@ class DashboardCustomerController extends Controller
 
             $history = \App\Models\OrderDeliveryStatus::with(['menuMakanan'])
                 ->where('batch', $activeOrder->package_batch)
+                ->where('meal_package_id', $activeOrder->meal_package_id)
                 ->whereIn('menu_makanan_id', $menuIds)
                 ->whereIn('delivery_date', $serviceDates)
                 ->whereDate('delivery_date', '<', $date)
