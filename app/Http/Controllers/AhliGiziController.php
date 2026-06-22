@@ -25,7 +25,7 @@ class AhliGiziController extends Controller
             ->where('package_category', 'personal')
             ->with([
                 'user:id,name,email',
-                'user.detail:user_id,mr,nik,hp'
+                'user.detail:user_id,mr,nik,hp,alamat'
             ])
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($subQuery) use ($q) {

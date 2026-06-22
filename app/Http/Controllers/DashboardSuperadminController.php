@@ -35,7 +35,7 @@ class DashboardSuperadminController extends Controller
         $orders = Order::query()
             ->whereHas('user', fn($q) => $q->where('role', 'customer'))
             ->where('package_category', 'personal')
-            ->with(['user:id,name,email', 'user.detail:user_id,mr,nik,hp'])
+            ->with(['user:id,name,email', 'user.detail:user_id,mr,nik,hp,alamat'])
             ->when($q, function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('order_number', 'like', "%{$q}%")
