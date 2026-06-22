@@ -14,6 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(SqlDataSeeder::class);
+    }
+
+    public function runOld(): void
+    {
         // === SUPER ADMIN ===
         $admin = User::updateOrCreate(
             ['email' => 'superadmin@mail.com'],
@@ -122,11 +127,5 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Seeder lainnya
-        $this->call([
-            PackageTypeSeeder::class, // wajib duluan
-            MealPackagesSeeder::class,
-            MenuMakananSeeder::class
-        ]);
     }
 }
