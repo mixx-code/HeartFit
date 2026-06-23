@@ -95,7 +95,7 @@
                                     <td class="ps-3 text-muted small">{{ $loop->iteration }}</td>
                                     <td>
                                         <div class="fw-semibold lh-sm">{{ $row->mealPackage->nama_meal_package }}</div>
-                                        <span class="badge text-bg-info" style="font-size:10px">{{ ucfirst($row->mealPackage->jenis_paket) }}</span>
+                                        <span class="badge bg-label-info" style="font-size:10px">{{ ucfirst($row->mealPackage->jenis_paket) }}</span>
                                     </td>
                                     <td>
                                         <span class="badge bg-label-secondary">Batch {{ $row->batch }}</span>

@@ -18,8 +18,7 @@ class DashboardAdminController extends Controller
 
         $items = OrderDeliveryStatus::with(['mealPackage', 'menuMakanan', 'confirmer'])
             ->whereDate('delivery_date', $date)
-            ->orderByRaw("FIELD(status_siang, 'pending','sedang dikirim','sampai','gagal dikirim')")
-            ->orderByRaw("FIELD(status_malam, 'pending','sedang dikirim','sampai','gagal dikirim')")
+            ->orderBy('id')
             ->get();
 
         // Riwayat pengantaran (semua delivery sebelum tanggal dipilih)
