@@ -6,11 +6,10 @@
     <div class="container-xxl flex-grow-1 container-p-y">
 
         {{-- =========================================
-       FILTER TANGGAL (Bootstrap only)
-     ========================================= --}}
+             FILTER TANGGAL
+        ========================================= --}}
         <div class="mb-3 border-bottom">
             <div class="py-2 d-flex flex-wrap align-items-end gap-3">
-                {{-- Filter Tanggal --}}
                 <form method="GET" class="d-flex flex-wrap gap-2 align-items-end">
                     <div>
                         <label for="date" class="form-label mb-0">Tanggal</label>
@@ -20,7 +19,6 @@
                     <a href="{{ route('dashboard.admin') }}" class="btn btn-outline-secondary">Hari Ini</a>
                 </form>
 
-                {{-- Generate Delivery Manual — hanya role yang ada di settings.delivery.generate --}}
                 @if(in_array(auth()->user()->role, config('settings.delivery.generate', [])))
                 <form method="POST" action="{{ route('admin.deliveries.generate') }}" class="ms-auto"
                       onsubmit="return confirm('Generate delivery untuk tanggal {{ $date }}?')">
@@ -49,246 +47,111 @@
         @endif
 
         @php
-            // ===== Helper untuk seluruh halaman =====
-            // Badge status
             $badge = fn($s) => match ($s) {
-                'pending' => 'bg-secondary',
-                'diproses' => 'bg-info',
+                'pending'        => 'bg-secondary',
+                'diproses'       => 'bg-info',
                 'sedang dikirim' => 'bg-warning text-dark',
-                'sampai' => 'bg-success',
-                'gagal dikirim' => 'bg-danger',
-                default => 'bg-secondary',
-            };
-            // Step untuk progress (1..4) atau -1 jika gagal
-            $mapStep = fn($s) => match (Str::lower(trim($s ?? ''))) {
-                'pending' => 1,
-                'diproses' => 2,
-                'sedang dikirim' => 3,
-                'sampai' => 4,
-                'gagal dikirim' => -1,
-                default => 1,
-            };
-
-            // Render progress 4 segmen
-            $renderStepper = function ($step) {
-                // mapping warna berdasarkan step
-                $color = match ($step) {
-                    1 => 'bg-secondary',
-                    2 => 'bg-warning',
-                    3 => 'bg-info',
-                    4 => 'bg-success',
-                    -1 => 'bg-danger',
-                    default => 'bg-secondary',
-                };
-
-                // mapping persentase progress
-                $progress = match ($step) {
-                    1 => 25,
-                    2 => 50,
-                    3 => 75,
-                    4, -1 => 100,
-                    default => 25,
-                };
-
-                // render HTML progress bar
-                return '
-      <div class="progress" role="progressbar" aria-label="Stepper" style="height: 8px;">
-        <div class="progress-bar ' .
-                    $color .
-                    '" style="width:' .
-                    $progress .
-                    '%"></div>
-      </div>
-    ';
+                'sampai'         => 'bg-success',
+                'gagal dikirim'  => 'bg-danger',
+                default          => 'bg-secondary',
             };
         @endphp
-        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-3">
-            {{-- <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Pesanan Hari Ini</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="display-6 fw-bold">{{ $kpi['orders_today'] ?? 0 }}</div>
-                        <div class="small text-secondary mt-1">Termasuk reguler & premium</div>
-                        @if (isset($kpi['orders_progress']))
-                            <div class="mt-3">
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span>Target harian</span><span>{{ (int) $kpi['orders_progress'] }}%</span>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar" style="width: {{ (int) $kpi['orders_progress'] }}%"></div>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div> --}}
-            {{-- <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Pengantaran Selesai</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="display-6 fw-bold">{{ $kpi['delivered'] ?? 0 }}</div>
-                        <div class="small text-secondary mt-1">Siang + Malam</div>
-                        @if (isset($kpi['delivered_pct']))
-                            <div class="mt-3">
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span>Progres</span><span>{{ (int) $kpi['delivered_pct'] }}%</span>
-                                </div>
-                                <div class="progress">
-                                    <div class="progress-bar" style="width: {{ (int) $kpi['delivered_pct'] }}%"></div>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div> --}}
-            {{-- <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Sedang Dikirim</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="display-6 fw-bold">{{ $kpi['shipping'] ?? 0 }}</div>
-                    </div>
+
+        {{-- =========================================
+             TABEL PENGANTARAN
+        ========================================= --}}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-light d-flex align-items-center gap-2">
+                <i class="bx bx-package fs-5 text-primary"></i>
+                <span class="fw-semibold">Pengantaran</span>
+                <span class="badge bg-secondary ms-1">{{ $items->count() }}</span>
+                <small class="text-muted ms-auto">
+                    <i class="bx bx-calendar me-1"></i>
+                    {{ \Carbon\Carbon::parse($date)->locale('id')->isoFormat('dddd, D MMMM Y') }}
+                </small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3" style="width:42px">#</th>
+                                <th>Paket</th>
+                                <th>Batch</th>
+                                <th class="text-center">Siang</th>
+                                <th class="text-center">Malam</th>
+                                <th>Konfirmasi</th>
+                                <th class="pe-3" style="width:90px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($items as $row)
+                                @php
+                                    $spec      = $row->menuMakanan->spec_menu ?? [];
+                                    $menuSiang = array_slice($spec['Makan Siang'] ?? [], 0, 10);
+                                    $menuMalam = array_slice($spec['Makan Malam'] ?? [], 0, 10);
+                                @endphp
+                                <tr>
+                                    <td class="ps-3 text-muted small">{{ $loop->iteration }}</td>
+                                    <td>
+                                        <div class="fw-semibold lh-sm">{{ $row->mealPackage->nama_meal_package }}</div>
+                                        <span class="badge text-bg-info" style="font-size:10px">{{ ucfirst($row->mealPackage->jenis_paket) }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-label-secondary">Batch {{ $row->batch }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge {{ $badge($row->status_siang) }}">{{ ucfirst($row->status_siang) }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge {{ $badge($row->status_malam) }}">{{ ucfirst($row->status_malam) }}</span>
+                                    </td>
+                                    <td class="small">
+                                        @if ($row->confirmed_by)
+                                            <i class="bx bx-check-shield text-success"></i>
+                                            {{ $row->confirmer?->name ?? '-' }}
+                                        @else
+                                            <span class="text-warning">
+                                                <i class="bx bx-time"></i> Belum
+                                            </span>
+                                        @endif
+                                    </td>
+                                    <td class="pe-3">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="offcanvas"
+                                            data-bs-target="#deliveryOffcanvas"
+                                            data-paket="{{ $row->mealPackage->nama_meal_package }}"
+                                            data-jenis="{{ ucfirst($row->mealPackage->jenis_paket) }}"
+                                            data-batch="{{ $row->batch }}"
+                                            data-date="{{ \Carbon\Carbon::parse($row->delivery_date)->locale('id')->isoFormat('dddd, D MMMM Y') }}"
+                                            data-status-siang="{{ $row->status_siang }}"
+                                            data-status-malam="{{ $row->status_malam }}"
+                                            data-confirmed="{{ $row->confirmed_by ? ($row->confirmer?->name ?? '-') : '' }}"
+                                            data-confirmed-at="{{ $row->confirmed_at ? \Carbon\Carbon::parse($row->confirmed_at)->format('d/m/Y H:i') : '' }}"
+                                            data-menu-siang="{{ json_encode($menuSiang) }}"
+                                            data-menu-malam="{{ json_encode($menuMalam) }}"
+                                            data-action="{{ route('admin.deliveries.updateStatus', $row->id) }}">
+                                            <i class="bx bx-detail"></i> Detail
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-5">
+                                        <i class="bx bx-inbox fs-2 d-block mb-1"></i>
+                                        Belum ada pengantaran untuk tanggal ini.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <div class="col">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-light">
-                        <h6 class="mb-0 fw-semibold">Gagal Dikirim</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="display-6 fw-bold">{{ $kpi['failed'] ?? 0 }}</div>
-                        <div class="small text-secondary mt-1">Butuh follow-up</div>
-                    </div>
-                </div>
-            </div> --}}
-        </div>
-        <div class="row g-3">
-            @forelse ($items as $row)
-                @php
-                    $spec = $row->menuMakanan->spec_menu ?? [];
-                    $menuSiang = $spec['Makan Siang'] ?? [];
-                    $menuMalam = $spec['Makan Malam'] ?? [];
-                    $stepSiang = $mapStep($row->status_siang);
-                    $stepMalam = $mapStep($row->status_malam);
-                @endphp
-
-                <div class="col-12">
-                    <div class="card border-0 shadow-sm">
-                        {{-- HEADER --}}
-                        <div class="card-header bg-light">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                <div>
-                                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <h6 class="mb-0 fw-semibold">{{ $row->mealPackage->nama_meal_package }}</h6>
-                                        <span class="badge rounded-pill text-bg-info">{{ ucfirst($row->mealPackage->jenis_paket) }}</span>
-                                        <span class="badge rounded-pill text-bg-secondary">Batch {{ $row->batch }}</span>
-                                    </div>
-                                    <div class="text-muted small mt-1">
-                                        <i class="bx bx-calendar me-1"></i>{{ \Carbon\Carbon::parse($row->delivery_date)->locale('id')->isoFormat('dddd, D MMMM Y') }}
-                                    </div>
-                                </div>
-                                <div class="small text-muted">
-                                    @if ($row->confirmed_by)
-                                        <i class="bx bx-check-shield text-success me-1"></i>
-                                        {{ $row->confirmer?->name ?? '-' }}
-                                        &mdash; {{ \Carbon\Carbon::parse($row->confirmed_at)->format('d/m/Y H:i') }}
-                                    @else
-                                        <i class="bx bx-time text-warning me-1"></i>Belum dikonfirmasi
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- BODY --}}
-                        <div class="card-body">
-                            <div class="row g-3">
-
-                                {{-- MENU PREVIEW --}}
-                                <div class="col-lg-5">
-                                    <div class="row">
-                                        <div class="col-sm-6">
-                                            <div class="fw-semibold small mb-2">Menu Siang</div>
-                                            <ul class="list-unstyled small mb-0">
-                                                @forelse(array_slice($menuSiang, 0, 5) as $m)
-                                                    <li class="py-1 border-bottom">{{ $m }}</li>
-                                                @empty
-                                                    <li class="text-muted">-</li>
-                                                @endforelse
-                                            </ul>
-                                        </div>
-                                        <div class="col-sm-6 mt-3 mt-sm-0">
-                                            <div class="fw-semibold small mb-2">Menu Malam</div>
-                                            <ul class="list-unstyled small mb-0">
-                                                @forelse(array_slice($menuMalam, 0, 5) as $m)
-                                                    <li class="py-1 border-bottom">{{ $m }}</li>
-                                                @empty
-                                                    <li class="text-muted">-</li>
-                                                @endforelse
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {{-- STATUS SIANG --}}
-                                <div class="col-lg-3">
-                                    <div class="fw-semibold small mb-2">Status Siang</div>
-                                    <span class="badge {{ $badge($row->status_siang) }} mb-2">{{ strtoupper($row->status_siang) }}</span>
-                                    {!! $renderStepper($stepSiang) !!}
-                                    <form method="POST" class="mt-3 d-flex gap-2 align-items-center"
-                                        action="{{ route('admin.deliveries.updateStatus', $row->id) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="field" value="status_siang">
-                                        <select name="value" class="form-select form-select-sm">
-                                            @foreach(['pending','diproses','sedang dikirim','sampai','gagal dikirim'] as $s)
-                                                <option value="{{ $s }}" {{ $row->status_siang === $s ? 'selected' : '' }}>
-                                                    {{ ucfirst($s) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-primary">submit</button>
-                                    </form>
-                                </div>
-
-                                {{-- STATUS MALAM --}}
-                                <div class="col-lg-3">
-                                    <div class="fw-semibold small mb-2">Status Malam</div>
-                                    <span class="badge {{ $badge($row->status_malam) }} mb-2">{{ strtoupper($row->status_malam) }}</span>
-                                    {!! $renderStepper($stepMalam) !!}
-                                    <form method="POST" class="mt-3 d-flex gap-2 align-items-center"
-                                        action="{{ route('admin.deliveries.updateStatus', $row->id) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="field" value="status_malam">
-                                        <select name="value" class="form-select form-select-sm">
-                                            @foreach(['pending','diproses','sedang dikirim','sampai','gagal dikirim'] as $s)
-                                                <option value="{{ $s }}" {{ $row->status_malam === $s ? 'selected' : '' }}>
-                                                    {{ ucfirst($s) }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-primary">submit</button>
-                                    </form>
-                                </div>
-
-                                <div class="col-lg-1 d-none d-lg-block"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="col-12">
-                    <div class="alert alert-secondary">Belum ada pengantaran untuk tanggal ini.</div>
-                </div>
-            @endforelse
         </div>
 
-        {{-- RIWAYAT PENGANTARAN --}}
+        {{-- =========================================
+             RIWAYAT PENGANTARAN
+        ========================================= --}}
         @if($history->count() > 0)
         <div class="card shadow border-0 mt-4">
             <div class="card-header fw-semibold text-white d-flex align-items-center gap-2" style="background-color:#5DD64C;">
@@ -357,10 +220,82 @@
         @endif
 
     </div>
+
+    {{-- =========================================
+         OFFCANVAS DETAIL PENGANTARAN
+    ========================================= --}}
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="deliveryOffcanvas" style="width:420px">
+        <div class="offcanvas-header border-bottom">
+            <div class="overflow-hidden pe-2">
+                <h6 class="offcanvas-title fw-semibold mb-1 text-truncate" id="oc-paket">-</h6>
+                <div class="small d-flex flex-wrap align-items-center gap-1" id="oc-meta"></div>
+            </div>
+            <button type="button" class="btn-close flex-shrink-0 ms-2" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+
+            {{-- Konfirmasi --}}
+            <div class="mb-3 small" id="oc-confirmed"></div>
+
+            {{-- Menu --}}
+            <div class="row g-2 mb-4 pb-3 border-bottom">
+                <div class="col-6">
+                    <div class="fw-semibold small mb-2">Menu Siang</div>
+                    <ul class="list-unstyled small mb-0" id="oc-menu-siang"></ul>
+                </div>
+                <div class="col-6">
+                    <div class="fw-semibold small mb-2">Menu Malam</div>
+                    <ul class="list-unstyled small mb-0" id="oc-menu-malam"></ul>
+                </div>
+            </div>
+
+            {{-- Status Siang --}}
+            <div class="mb-4 pb-3 border-bottom">
+                <div class="fw-semibold small mb-2">Status Siang</div>
+                <div class="mb-2" id="oc-badge-siang"></div>
+                <div class="mb-3" id="oc-stepper-siang"></div>
+                <form id="oc-form-siang" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="field" value="status_siang">
+                    <div class="d-flex gap-2 align-items-center">
+                        <select name="value" id="oc-select-siang" class="form-select form-select-sm">
+                            @foreach(['pending','diproses','sedang dikirim','sampai','gagal dikirim'] as $s)
+                                <option value="{{ $s }}">{{ ucfirst($s) }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">Update</button>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Status Malam --}}
+            <div>
+                <div class="fw-semibold small mb-2">Status Malam</div>
+                <div class="mb-2" id="oc-badge-malam"></div>
+                <div class="mb-3" id="oc-stepper-malam"></div>
+                <form id="oc-form-malam" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="field" value="status_malam">
+                    <div class="d-flex gap-2 align-items-center">
+                        <select name="value" id="oc-select-malam" class="form-select form-select-sm">
+                            @foreach(['pending','diproses','sedang dikirim','sampai','gagal dikirim'] as $s)
+                                <option value="{{ $s }}">{{ ucfirst($s) }}</option>
+                            @endforeach
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-primary flex-shrink-0">Update</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
+    // ── Riwayat pagination ──────────────────────────────────────────────
     const _riwayatState = {};
     function initRiwayat(key, perPage) {
         const tbody = document.getElementById('riwayat-tbody-' + key);
@@ -387,6 +322,73 @@
         s.page = Math.min(Math.max(s.page + dir, 1), s.totalPages);
         renderRiwayat(key);
     }
-    document.addEventListener('DOMContentLoaded', () => initRiwayat('admin', 5));
+
+    // ── Offcanvas detail ────────────────────────────────────────────────
+    const BADGE_CLS = {
+        'pending':        'bg-secondary',
+        'diproses':       'bg-info',
+        'sedang dikirim': 'bg-warning text-dark',
+        'sampai':         'bg-success',
+        'gagal dikirim':  'bg-danger',
+    };
+    const STEP_CFG = {
+        'pending':        { pct: 25,  cls: 'bg-secondary' },
+        'diproses':       { pct: 50,  cls: 'bg-warning' },
+        'sedang dikirim': { pct: 75,  cls: 'bg-info' },
+        'sampai':         { pct: 100, cls: 'bg-success' },
+        'gagal dikirim':  { pct: 100, cls: 'bg-danger' },
+    };
+
+    function buildStepper(status) {
+        const { pct, cls } = STEP_CFG[status] ?? STEP_CFG['pending'];
+        return `<div class="progress" style="height:8px">
+                    <div class="progress-bar ${cls}" style="width:${pct}%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-1" style="font-size:10px;color:#aaa">
+                    <span>Pending</span><span>Diproses</span><span>Dikirim</span><span>Sampai</span>
+                </div>`;
+    }
+
+    function buildMenuList(items) {
+        if (!items || !items.length) return '<li class="text-muted">-</li>';
+        return items.map(m => `<li class="py-1 border-bottom">${m}</li>`).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initRiwayat('admin', 5);
+
+        const ocEl = document.getElementById('deliveryOffcanvas');
+        if (!ocEl) return;
+
+        ocEl.addEventListener('show.bs.offcanvas', function (e) {
+            const btn = e.relatedTarget;
+            if (!btn) return;
+            const d = btn.dataset;
+
+            document.getElementById('oc-paket').textContent = d.paket;
+            document.getElementById('oc-meta').innerHTML =
+                `<span class="badge text-bg-info">${d.jenis}</span>` +
+                `<span class="badge text-bg-secondary">Batch ${d.batch}</span>` +
+                `<span class="text-muted"><i class="bx bx-calendar me-1"></i>${d.date}</span>`;
+
+            const confEl = document.getElementById('oc-confirmed');
+            confEl.innerHTML = d.confirmed
+                ? `<i class="bx bx-check-shield text-success me-1"></i>${d.confirmed} &mdash; ${d.confirmedAt}`
+                : `<i class="bx bx-time text-warning me-1"></i><span class="text-muted">Belum dikonfirmasi</span>`;
+
+            document.getElementById('oc-menu-siang').innerHTML = buildMenuList(JSON.parse(d.menuSiang || '[]'));
+            document.getElementById('oc-menu-malam').innerHTML = buildMenuList(JSON.parse(d.menuMalam || '[]'));
+
+            ['siang', 'malam'].forEach(slot => {
+                const key = 'status' + slot.charAt(0).toUpperCase() + slot.slice(1);
+                const status = d[key] ?? 'pending';
+                document.getElementById(`oc-badge-${slot}`).innerHTML =
+                    `<span class="badge ${BADGE_CLS[status] ?? 'bg-secondary'}">${status.toUpperCase()}</span>`;
+                document.getElementById(`oc-stepper-${slot}`).innerHTML = buildStepper(status);
+                document.getElementById(`oc-form-${slot}`).action = d.action;
+                document.getElementById(`oc-select-${slot}`).value = status;
+            });
+        });
+    });
 </script>
 @endpush
