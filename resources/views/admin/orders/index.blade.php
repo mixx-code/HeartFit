@@ -99,13 +99,13 @@
                                     @endif
                                 </td>
 
-                                {{-- WhatsApp (dari tabel orders) --}}
+                                {{-- WhatsApp (dari tabel orders, hanya paket personal) --}}
                                 <td>
-                                    @if($o->whatsapp)
+                                    @if(strtolower($o->package_category ?? '') === 'personal' && $o->whatsapp)
                                         <div class="d-flex align-items-center gap-1">
                                             <small class="text-muted">{{ $o->whatsapp }}</small>
-                                            <a href="https://wa.me/{{ $o->whatsapp }}" 
-                                               target="_blank" 
+                                            <a href="https://wa.me/{{ $o->whatsapp }}"
+                                               target="_blank"
                                                class="btn btn-sm btn-success"
                                                title="Chat via WhatsApp">
                                                 <i class="bx bxl-whatsapp"></i>
@@ -195,7 +195,7 @@
                                                 data-order-number="{{ $o->order_number }}"
                                                 data-user-name="{{ $o->user?->name ?? '-' }}"
                                                 data-user-email="{{ $o->user?->email ?? '-' }}"
-                                                data-whatsapp="{{ $o->whatsapp ?? '-' }}"
+                                                data-whatsapp="{{ strtolower($o->package_category ?? '') === 'personal' ? ($o->whatsapp ?? '-') : '-' }}"
                                                 data-package-label="{{ $o->package_label }}"
                                                 data-package-category="{{ $o->package_category ?? '-' }}"
                                                 data-start-date="{{ $o->start_date ? $o->start_date->format('d/m/Y') : '-' }}"

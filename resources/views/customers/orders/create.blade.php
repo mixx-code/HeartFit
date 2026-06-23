@@ -1108,17 +1108,17 @@ setHidden('hidUniqueMenuCount', names.length);
 setHidden('hidAmountTotal', amountTotal);
 }
 
-function isPremiumSelected() {
+function isPersonalSelected() {
   const id = getChosenKey();
   if (!id || !PACKAGES[id]) return false;
-  return (PACKAGES[id].category ?? '').toLowerCase() === 'premium';
+  return (PACKAGES[id].category ?? '').toLowerCase() === 'personal';
 }
 
 function updateWhatsappVisibility() {
   const card  = document.getElementById('whatsappCard');
   const input = document.getElementById('orderWhatsapp');
   if (!card || !input) return;
-  if (isPremiumSelected()) {
+  if (isPersonalSelected()) {
     card.classList.remove('d-none');
     input.setAttribute('required', '');
   } else {
@@ -1178,7 +1178,7 @@ nextBtns.forEach(btn=>btn.addEventListener('click',()=>{
     const waEl = document.getElementById('orderWhatsapp');
     let step3Invalid = false;
     if (notesEl && !notesEl.value.trim()) { notesEl.classList.add('is-invalid'); step3Invalid = true; } else if (notesEl) { notesEl.classList.remove('is-invalid'); }
-    if (isPremiumSelected() && waEl && (!waEl.value.trim() || !/^62[0-9]{8,18}$/.test(waEl.value.trim()))) { waEl.classList.add('is-invalid'); step3Invalid = true; } else if (waEl) { waEl.classList.remove('is-invalid'); }
+    if (isPersonalSelected() && waEl && (!waEl.value.trim() || !/^62[0-9]{8,18}$/.test(waEl.value.trim()))) { waEl.classList.add('is-invalid'); step3Invalid = true; } else if (waEl) { waEl.classList.remove('is-invalid'); }
     if (step3Invalid) { alert('Harap lengkapi semua field yang wajib diisi.'); return; }
     showStep(4);
     const payChecked = document.querySelector('input[name="payment_method"]:checked');

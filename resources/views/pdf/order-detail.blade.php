@@ -66,7 +66,9 @@
                     <table class="info">
                         <tr><td class="lbl">Nama</td><td>{{ $order->user?->name ?? '-' }}</td></tr>
                         <tr><td class="lbl">Email</td><td>{{ $order->user?->email ?? '-' }}</td></tr>
+                        @if(strtolower($order->package_category ?? '') === 'personal')
                         <tr><td class="lbl">WhatsApp</td><td>{{ $order->whatsapp ?? '-' }}</td></tr>
+                        @endif
                         <tr><td class="lbl">Alamat</td><td>{{ $order->user?->detail?->alamat ?? '-' }}</td></tr>
                     </table>
                 </div>

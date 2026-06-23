@@ -188,7 +188,7 @@ class OrderController extends Controller
             
             // catatan khusus
             'notes'              => ['required', 'string', 'max:500'],
-            'whatsapp'           => strtolower($request->input('package_category', '')) === 'premium'
+            'whatsapp'           => strtolower($request->input('package_category', '')) === 'personal'
                 ? ['required', 'string', 'max:20', 'regex:/^62[0-9]{8,18}$/']
                 : ['nullable', 'string', 'max:20'],
         ]);
@@ -289,7 +289,7 @@ class OrderController extends Controller
             'unique_menu_count'  => ['nullable', 'integer', 'min:0'],
             'meta'               => ['nullable'],
             'notes'              => ['required', 'string', 'max:500'],
-            'whatsapp'           => strtolower($request->input('package_category', '')) === 'premium'
+            'whatsapp'           => strtolower($request->input('package_category', '')) === 'personal'
                 ? ['required', 'string', 'max:20', 'regex:/^62[0-9]{8,18}$/']
                 : ['nullable', 'string', 'max:20'],
         ]);

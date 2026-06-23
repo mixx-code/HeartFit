@@ -163,11 +163,13 @@
                 <span class="sep">:</span>
                 <span class="value">{{ strtoupper($order->user?->name ?? '-') }}</span>
             </div>
+            @if(strtolower($order->package_category ?? '') === 'personal')
             <div class="row">
                 <span class="label">WHATSAPP</span>
                 <span class="sep">:</span>
                 <span class="value">{{ $order->whatsapp ?? '-' }}</span>
             </div>
+            @endif
             <div class="row">
                 <span class="label">ALAMAT</span>
                 <span class="sep">:</span>
