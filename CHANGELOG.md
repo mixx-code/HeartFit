@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased] - 2026-06-27
+
+### Added
+- **Validasi duplikat generate delivery** — tombol "Generate Delivery" di dashboard admin kini mengecek apakah data delivery sudah ada untuk tanggal yang dipilih; jika sudah ada, muncul peringatan kuning dan proses generate dibatalkan
+- **Auto-generate delivery tanggal lampau** — saat admin membuka dashboard dengan filter tanggal yang sudah lewat, sistem otomatis men-generate delivery record (status pending) jika belum ada data namun ada order PAID aktif pada tanggal tersebut; menggantikan ketergantungan penuh pada cron job
+- **Flash warning** — pesan peringatan berwarna kuning ditambahkan di dashboard admin untuk notifikasi generate duplikat
+
+### Fixed
+- **500 Internal Server Error saat klik Generate Delivery** — `generateDelivery()` kini dibungkus `try-catch` sehingga exception apapun yang muncul dari `Artisan::call()` dikembalikan sebagai pesan error yang ramah, bukan halaman 500
+
+---
+
 ## [Unreleased] - 2026-06-23 (rev 2)
 
 ### Added

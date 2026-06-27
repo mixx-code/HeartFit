@@ -13,8 +13,22 @@ class DashboardAdminController extends Controller
 {
     public function index(Request $request)
     {
-        $tz   = 'Asia/Jakarta';
-        $date = $request->get('date', now($tz)->toDateString());
+        $tz    = 'Asia/Jakarta';
+        $date  = $request->get('date', now($tz)->toDateString());
+        $today = now($tz)->toDateString();
+
+        // Auto-generate untuk tanggal lampau yang belum ada data delivery namun ada order aktif
+        if ($date < $today) {
+            $existingCount = OrderDeliveryStatus::whereDate('delivery_date', $date)->count();
+            if ($existingCount === 0) {
+                $hasActiveOrders = \App\Models\Order::where('status', 'PAID')
+                    ->whereJsonContains('service_dates', $date)
+                    ->exists();
+                if ($hasActiveOrders) {
+                    Artisan::call('heartfit:generate-delivery-statuses', ['--date' => $date]);
+                }
+            }
+        }
 
         $items = OrderDeliveryStatus::with(['mealPackage', 'menuMakanan', 'confirmer'])
             ->whereDate('delivery_date', $date)
@@ -97,20 +111,32 @@ class DashboardAdminController extends Controller
         $tz   = 'Asia/Jakarta';
         $date = $request->input('date', now($tz)->toDateString());
 
-        $exitCode = Artisan::call('heartfit:generate-delivery-statuses', [
-            '--date' => $date,
-        ]);
-
-        $output = trim(Artisan::output());
-
-        if ($exitCode === 0) {
+        // Validasi: cegah generate ulang jika sudah ada data untuk tanggal ini
+        $existingCount = OrderDeliveryStatus::whereDate('delivery_date', $date)->count();
+        if ($existingCount > 0) {
             return redirect()
                 ->route('dashboard.admin', ['date' => $date])
-                ->with('success', "Generate delivery berhasil");
+                ->with('warning', "Delivery untuk tanggal {$date} sudah pernah di-generate ({$existingCount} data tersedia). Tidak bisa generate ulang.");
         }
 
-        return redirect()
-            ->route('dashboard.admin', ['date' => $date])
-            ->with('error', "Generate delivery gagal");
+        try {
+            $exitCode = Artisan::call('heartfit:generate-delivery-statuses', [
+                '--date' => $date,
+            ]);
+
+            if ($exitCode === 0) {
+                return redirect()
+                    ->route('dashboard.admin', ['date' => $date])
+                    ->with('success', "Generate delivery berhasil untuk tanggal {$date}.");
+            }
+
+            return redirect()
+                ->route('dashboard.admin', ['date' => $date])
+                ->with('error', "Generate delivery gagal. Tidak ada order aktif untuk tanggal {$date}.");
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('dashboard.admin', ['date' => $date])
+                ->with('error', "Generate delivery gagal: " . $e->getMessage());
+        }
     }
 }
